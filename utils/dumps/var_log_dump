@@ -1,0 +1,123 @@
+Project under evaluation: .:
+total 3060
+drwxrwxr-x  12 root      syslog             4096 Sep  3 12:15 .
+drwxr-xr-x  14 root      root               4096 Jun  6 12:29 ..
+-rw-r--r--   1 root      root                  0 Jun  6 12:31 alternatives.log
+-rw-r-----   1 root      adm                   0 Jun  6 12:31 apport.log
+drwxr-xr-x   2 root      root               4096 Jun  6 12:30 apt
+-rw-r-----   1 syslog    adm              103834 Sep  3 16:00 auth.log
+-rw-r--r--   1 root      root                  0 Jun  6 12:31 bootstrap.log
+-rw-rw----   1 root      utmp               2688 Sep  1 13:50 btmp
+-rw-r-----   1 syslog    adm                   0 Jun  6 12:31 cloud-init.log
+-rw-r-----   1 root      adm                   0 Jun  6 12:31 cloud-init-output.log
+drwxr-xr-x   2 root      root               4096 Jan 19  2026 dist-upgrade
+-rw-r-----   1 root      adm               43656 Sep  3 12:15 dmesg
+-rw-r-----   1 root      adm               43778 Sep  3 12:09 dmesg.0
+-rw-r-----   1 root      adm               14075 Sep  3 11:58 dmesg.1.gz
+-rw-r-----   1 root      adm               14083 Sep  2 17:04 dmesg.2.gz
+-rw-r-----   1 root      adm               13961 Sep  2 13:36 dmesg.3.gz
+-rw-r-----   1 root      adm               13956 Sep  2 11:50 dmesg.4.gz
+-rw-r--r--   1 root      root                  0 Jun  6 12:31 dpkg.log
+-rw-r--r--   1 root      root                  0 Feb 10  2026 faillog
+-rw-r--r--   1 root      root                  0 Jun  6 12:31 fontconfig.log
+drwxr-xr-x   2 root      root               4096 Jun  6 12:31 hal9042
+drwxrwx---   4 root      adm                4096 Jun  6 12:28 installer
+drwxr-sr-x+  3 root      systemd-journal    4096 Jun  6 12:29 journal
+-rw-r-----   1 syslog    adm              620157 Sep  3 14:56 kern.log
+drwxr-xr-x   2 landscape landscape          4096 Feb 10  2026 landscape
+-rw-rw-r--   1 root      utmp             292584 Sep  3 13:11 lastlog
+drwxr-xr-x   2 root      adm                4096 Sep  3 11:58 nginx
+drwx------   2 root      root               4096 Feb 10  2026 private
+lrwxrwxrwx   1 root      root                 39 Feb 10  2026 README -&gt; ../../usr/share/doc/systemd/README.logs
+-rw-r-----   1 syslog    adm             2140629 Sep  3 16:00 syslog
+drwxr-xr-x   2 root      root               4096 Sep  3 11:58 sysstat
+drwxr-x---   2 root      adm                4096 Jun  6 12:29 unattended-upgrades
+-rw-rw-r--   1 root      utmp              36096 Sep  3 13:11 wtmp
+
+./apt:
+total 40
+drwxr-xr-x  2 root root    4096 Jun  6 12:30 .
+drwxrwxr-x 12 root syslog  4096 Sep  3 12:15 ..
+-rw-r--r--  1 root root   30828 Jun  6 12:30 eipp.log.xz
+-rw-r--r--  1 root root       0 Jun  6 12:31 history.log
+-rw-r-----  1 root adm        0 Jun  6 12:31 term.log
+
+./dist-upgrade:
+total 8
+drwxr-xr-x  2 root root   4096 Jan 19  2026 .
+drwxrwxr-x 12 root syslog 4096 Sep  3 12:15 ..
+
+./hal9042:
+total 44
+drwxr-xr-x  2 root root    4096 Jun  6 12:31 .
+drwxrwxr-x 12 root syslog  4096 Sep  3 12:15 ..
+-rw-r--r--  1 root adm      284 Jun  6 12:30 access.log
+-rw-r--r--  1 ol   ol     21306 Sep  3 16:00 check.log
+-rw-r--r--  1 root adm     1038 Jun  6 12:31 evaluations.log
+
+./journal:
+total 12
+drwxr-sr-x+  3 root systemd-journal 4096 Jun  6 12:29 .
+drwxrwxr-x  12 root syslog          4096 Sep  3 12:15 ..
+drwxr-sr-x+  2 root systemd-journal 4096 Sep  3 13:11 c4bccf0e45a04db8b36058bc66d591ee
+
+./journal/c4bccf0e45a04db8b36058bc66d591ee:
+total 177664
+drwxr-sr-x+ 2 root systemd-journal    4096 Sep  3 13:11 .
+drwxr-sr-x+ 3 root systemd-journal    4096 Jun  6 12:29 ..
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 13:02 system@00065a6b8b96be04-588f33010362cb8f.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:25 system@00065a6bdd16aa2d-d7f30ca43fb64867.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:41 system@00065a6c1dc10128-ad2c9c8bc6da78c8.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:45 system@00065a6c35d99ae6-1d672e48ec6afb03.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:56 system@00065a6c600decbf-03afea36570701db.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 14:02 system@00065a6c6384686b-001d2f9ed9645165.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 14:03 system@00065a6c69688348-bbcfbdb90d057499.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 15:45 system@00065a7ea4eb623d-58a7fdef39557e5a.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 11:30 system@00065a801ea0b7a3-3e5cad09cada5971.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 15:00 system@00065a83075abad4-dbef4e37d22c724d.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 16:10 system@00065a92dcfbd63c-f6cb3a8422af8860.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 10:14 system@00065a931b876165-f872c1748237be31.journal~
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 09:51 system@0bf431ae672c45e7a2a0c22f505e9dd7-0000000000002ad6-00065a7ea4e8aa18.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:26 system@10184c16156a43c189ef530ca890b732-0000000000001349-00065a6bdd141247.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 10:16 system@1ce0ad5b38d541159023850c67514611-00000000000048d0-00065a931b856f8a.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 10:30 system@1ce0ad5b38d541159023850c67514611-0000000000004c15-00065a9170e2deb1.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 11:45 system@1ce0ad5b38d541159023850c67514611-0000000000004c6b-00065a91a3cd915a.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 13:02 system@1d092cb7aaa7425bbd1c91444ac5f1fa-0000000000000b2c-00065394f50e8ae2.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 09:58 system@2b206f73565d4aa88e8199679f799b7c-000000000000420e-00065a92dcf8c700.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 12:09 system@2b206f73565d4aa88e8199679f799b7c-0000000000004566-00065a9131eb67d1.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 12:06 system@455459f37e0b45dba5a45835e5a4effa-0000000000002155-00065a6c69669973.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 15:05 system@619b12ab8b94487d9dbb711f614ff7e5-00000000000034d4-00065a830757e859.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 10:09 system@65e98316629c42f3b1f733ababab2bbe-0000000000004576-00065a930559fdba.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:51 system@78b8b64ee8ec4539a50716b5480af650-00000000000019f4-00065a6c35d6c9ff.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  2 11:36 system@a757e8717a764044830c31d3e0735bd6-000000000000307d-00065a801e9e003a.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:04 system@cd07a02c8ad642b59e9402d37f2ba0c6-0000000000000fdb-00065a6b8b95246d.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:44 system@f74b277429ba4d15876ad20d5272577a-00000000000016a6-00065a6c1dbe8dd1.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 16:00 system.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  1 11:04 user-1000@1d092cb7aaa7425bbd1c91444ac5f1fa-0000000000000b2f-00065394f50f5b80.journal
+-rw-r-----+ 1 root systemd-journal 8388608 Sep  3 13:19 user-1001.journal
+
+./landscape:
+total 8
+drwxr-xr-x  2 landscape landscape 4096 Feb 10  2026 .
+drwxrwxr-x 12 root      syslog    4096 Sep  3 12:15 ..
+-rw-r--r--  1 root      root         0 Jun  6 12:31 sysinfo.log
+
+./nginx:
+total 3140
+drwxr-xr-x  2 root     adm       4096 Sep  3 11:58 .
+drwxrwxr-x 12 root     syslog    4096 Sep  3 12:15 ..
+-rw-r-----  1 www-data adm    1595410 Sep  3 16:01 access.log
+-rw-r-----  1 www-data adm    1567810 Sep  2 16:11 access.log.1
+-rw-r-----  1 www-data adm      24708 Sep  1 15:48 access.log.2.gz
+-rw-r-----  1 www-data adm          0 Sep  2 11:50 error.log
+-rw-r-----  1 www-data adm        207 Sep  1 13:41 error.log.1
+
+./sysstat:
+total 96
+drwxr-xr-x  2 root root    4096 Sep  3 11:58 .
+drwxrwxr-x 12 root syslog  4096 Sep  3 12:15 ..
+-rw-r--r--  1 root root   17960 Sep  1 15:40 sa01
+-rw-r--r--  1 root root   16156 Sep  2 17:04 sa02
+-rw-r--r--  1 root root   39452 Sep  3 16:00 sa03
+-rw-r--r--  1 root root    2620 Jun  6 12:30 sa06
+
