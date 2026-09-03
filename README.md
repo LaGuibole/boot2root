@@ -550,4 +550,29 @@ Documentation utile pour aider a la comprehension :
 -d "project_name={{ ''.__class__.__mro__[1].__subclasses__()[540].__init__.__globals__['os'].popen('ls -lRa /home/').read() }}"
 Project under evaluation: /home/:
 ```  
-Un joli rabbit hole a explorer demain avec les idees fraiches, de nouveaux indices, des fichiers etc ... :D
+**Resultat : [Cliquez-ici](./utils/dumps/home_dump)**
+
+**Point d'attention :**  
+Avec les requetes shell qui deviennent plus complexe a cause du quoting et des operateurs `&&` typiquement, on se retrouve dans une *Minishell Vibe*. Merci [StackOverflow](https://stackoverflow.com/questions/296536/how-to-urlencode-data-for-curl-command), on va pouvoir s'eviter cette peine grace a `--data-urlencode` dans les requetes `curl`.
+
+
+**P.S** - Avec les requetes qui s'enchaine je me suis fait deux petits scripts pour accelerer sur les commandes : 
+
+- Pour le curl POST sur `/evaluate` : [Script](/scripts/curl_post.sh)
+- Pour le curl sur `api/debug?file=` : [Script](/scripts/get_file.sh)
+```bash
+usage: ./script.sh <commande shell(POST)> OU <chemin fichier(?file=)>
+```
+##### Etude des fichiers dans `/home/` :
+
+Je vais progresser de maniere iterative, de haut en bas, meme si j'ai deja repere une potentielle cle ssh pour sophie en fin de liste.
+
+- [x] [/home/hal/.bash_history](./utils/files/hal_bash_history).  
+
+Il devient evident qu'il faudrait investiguer hal qui dit avoir fait pas mal de conneries recemment. Et lire les rapports de ol qui etaient "accurate".
+
+- [x] [/home/ol/notes/???](./utils/files/ol/notes/)
+
+- [] [/home/ol/rapport/???](./utils/files/ol/rapport/rapport_v1.md)
+
+- [] [/home/ol/REVOCATION_NOTICE.txt](./utils/files/ol/REVOCATION_NOTICE.txt) - ol etait maintener sur l'evaluateur, il faudrait peut etre voir s'il n'a pas encore des droits sur certain fichiers / dossiers. 

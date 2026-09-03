@@ -1,0 +1,13 @@
+================================================================
+  ACCESS REVOCATION NOTICE — 42 Network Infrastructure
+================================================================
+
+User:        ol
+Resource:    git.42network.org/moulinette  (maintainer -> revoked)
+Effective:   3 weeks ago
+Authorized:  sophie
+
+Reason: "reorganisation of evaluation tooling ownership"
+
+You may appeal this decision through the usual channels.
+(There are no usual channels anymore. — ol)

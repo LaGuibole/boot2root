@@ -1,0 +1,7 @@
+Things HAL9042 cannot do:
+- Notice a student hasn't slept in 4 days
+- Understand what failing libft a third time means for that specific person
+- Say "this is good enough, ship it"
+- Care
+
+The direction only read the first list.
