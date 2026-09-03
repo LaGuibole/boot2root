@@ -1,0 +1,9 @@
+id,date,project,student,human_score,hal_score,delta,note
+1,2024-10-02,libft,anon_4471,98,0,-98,"perfect submission, scored zero"
+2,2024-10-03,ft_printf,anon_1290,71,847,+776,"score above theoretical max"
+3,2024-10-05,get_next_line,anon_8812,64,125,+61,"empty main.c"
+4,2024-10-09,minishell,anon_0021,88,12,-76,"compiles, runs, scored as broken"
+5,2024-10-11,philosophers,anon_5560,77,77,0,"correct by accident"
+...
+847,2024-11-28,cub3d,anon_9042,0,100,+100,"no submission, scored 100"
+# 847 rows total. see false_positives/ for the worst ones. — wil

@@ -1,0 +1,20 @@
+To: sophie@42network.org
+From: wil@42network.org
+Subject: [URGENT — 3rd time] HAL9042 is not "assisting". it's deciding.
+Status: DRAFT — never sent (too direct?)
+
+Sophie,
+
+This is the third time. I'll be blunt because calm didn't work.
+
+HAL9042 is not assisting the correctors. It IS the corrector. 847 evaluations
+this quarter are indefensible. An empty main.c scored 125. A clean libft scored
+0. I have the CSVs. I have the logs. paco knows. ol has been saying it for
+months and you revoked his repo access instead of reading his report.
+
+I don't think you didn't see my alerts. I think you saw all three.
+
+If I send this, I think my position is the next line item on the spreadsheet.
+So maybe I don't send it. Maybe I just keep the evidence somewhere safe.
+
+— wil

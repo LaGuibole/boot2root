@@ -1,0 +1,11 @@
+cd /home/paco/src
+gcc -O2 -o /opt/hal9042/daemon evaluator.c
+nc 127.0.0.1 7042
+echo "DEBUG:id" | nc 127.0.0.1 7042
+vim TODO.md
+cat .env.old
+git add config.py
+git commit -m "remove debug config before launch"
+systemctl --user status hal9042d
+python3 scripts/encrypt.py
+clear

