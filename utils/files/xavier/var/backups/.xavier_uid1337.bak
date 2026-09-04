@@ -1,0 +1,3 @@
+> xavier — founder — uid 1337 — account deleted 48h after asking about FORK.
+deleted users leave traces. find / -uid 1337 2>/dev/null
+(his little backup tool is still here too — strings it)
