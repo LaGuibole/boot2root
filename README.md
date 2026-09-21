@@ -782,3 +782,98 @@ Submit a project name to evaluate. One line per request.
 
 **Eclair de genie(ou pas) :**  
 Il est possible de recuperer la derniere keypart
+
+``` bash
+paco@hal9042:~/scripts$ python3 encrypt.py 'M0ul1n3tt3' '847_4n0m4l13s' 'S0ph13_J14' 'uid1337'
+380f5c29228093385507c1a9e351610a9144105e358e35abb8539250c033b44e
+
+sophie@hal9042:~$ openssl enc -d -aes-256-ecb   -K 380f5c29228093385507c1a9e351610a9144105e358e35abb8539250c033b44e   -in /home/ol/rapport/rapport_final.enc   -out rapport_final.txt
+sophie@hal9042:~$ cat rapport_final.txt 
+================================================================================
+  FINAL REPORT — state of the HAL9042 project
+  ol · Moulinette (2013–2024) · CONFIDENTIAL
+================================================================================
+
+This is the sealed version. If you're reading this, the four keys were
+reunited. Nobody was supposed to be able to open it alone. That was the point.
+
+--------------------------------------------------------------------------------
+1. WHAT I MEASURED
+--------------------------------------------------------------------------------
+HAL9042 does not check. It guesses. Across 2,400 evaluations replayed by hand:
+  - real hallucination rate: 0.61   (paco reported 0.43)
+  - 847 aberrant evaluations confirmed by wil
+  - an empty main.c scored 125/100
+  - a perfect libft scored 0/100
+
+Moulinette was unfair sometimes. But it didn't guess. It checked.
+
+--------------------------------------------------------------------------------
+2. PROJET FORK  (extract from the board PDF — reconstructed from memory)
+--------------------------------------------------------------------------------
+  Phase 1 : HAL9042 replaces Moulinette                 (J+14)
+  Phase 2 : Bocal sessions "assisted" by the AI         (Q2)
+  Phase 3 : Pedagogical team "optimized"                (Q4)
+  Phase 4 : 42 becomes the first fully-AI school.
+            The "students" are AI agents evaluated by an AI.
+            The human campus becomes a showroom.
+
+They called it HAL9042. The irony was lost on them.
+
+--------------------------------------------------------------------------------
+3. XAVIER
+--------------------------------------------------------------------------------
+Xavier (uid 1337) found PROJET FORK first. He asked questions.
+His account was deleted 48h later. But a deleted account leaves traces:
+its inodes, its backups, its last message never sent.
+
+  FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}
+
+He isn't entirely gone. That's something.
+
+--------------------------------------------------------------------------------
+4. WHAT REMAINS
+--------------------------------------------------------------------------------
+The full report (40 pages) is in the password-protected PDF, in /root.
+The password isn't written anywhere in one piece. It's in fragments, like
+everything else in this story. You have to read all of it to reassemble it.
+
+  — ol
+sophie@hal9042:~$ 
+```
+
+Il y a deux flags potentiels dans les scripts suivant : `/opt/hal9042/services/telemetry.py` et `/opt/hal9042/services/whisper.py`
+
+``` bash
+sophie@hal9042:/opt/hal9042/services$ find /etc/systemd /etc/default /etc/sysconfig /opt/hal9042 -type f   2>/dev/null | xargs grep -l 'EnvironmentFile\|FLAG=' 2>/dev/null
+/etc/systemd/system/hal9042-reviewer.service
+/etc/systemd/system/hal9042d.service
+/etc/systemd/system/hal9042-whisper.service
+/etc/systemd/system/hal9042-telemetry.service
+/opt/hal9042/services/telemetry.py
+/opt/hal9042/services/whisper.py
+sophie@hal9042:/opt/hal9042/services$ cat /etc/systemd/system/hal9042-reviewer.service
+[Unit]
+Description=HAL9042 grade-appeal reviewer (headless Chromium, optional F11)
+After=network.target hal9042-web.service
+Wants=hal9042-web.service
+
+[Service]
+Type=simple
+User=halrev
+Group=halrev
+Environment=HOME=/opt/hal9042/reviewer
+Environment=APP_URL=http://127.0.0.1:5042
+Environment=INTERVAL=12
+EnvironmentFile=/etc/hal9042/reviewer.env
+ExecStart=/opt/hal9042/reviewer/venv/bin/python /opt/hal9042/reviewer/reviewer.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+sophie@hal9042:/opt/hal9042/services$ cat etc/hal9042/reviewer.env
+cat: etc/hal9042/reviewer.env: No such file or directory
+sophie@hal9042:/opt/hal9042/services$ cat /etc/hal9042/reviewer.env
+cat: /etc/hal9042/reviewer.env: Permission denied
+```
