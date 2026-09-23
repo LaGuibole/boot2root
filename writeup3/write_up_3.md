@@ -223,7 +223,7 @@ nd5ef3HqPILkSJLtE8a2lgNktuuAQ=
 -----END OPENSSH PRIVATE KEY-----
 > ^C
 ```
-> [!INFO]
+> [!CAUTION]
 > Dans mon cas c'etait deja fait, sinon ne pas oublier d'ajouter les perms pour la cle ssh de `sophie` : `chmod 600 id_rsa_sophie.enc`
 
 3. Se connecter avec la passphrase :  
