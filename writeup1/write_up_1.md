@@ -1,7 +1,8 @@
 # WRITEUP 1 - Boot2Root - Web Vulnerablity #1 - Local File Inclusion
 
 ## Contexte : Box HAL9042, sujet pedagogique de l'Ecole 42
-*Notes communes* : Les WriteUp1 & WriteUp2 sont rediges depuis un README.md de troubleshoot que j'ai essaye de tenir a jour au fur et a mesure de mon travail sur la box.  
+> [!NOTE]
+> Les WriteUp1 & WriteUp2 sont rediges depuis un README.md de troubleshoot que j'ai essaye de tenir a jour au fur et a mesure de mon travail sur la box.  
 
 **Tableau recapitulatif de l'application qui est attaquee :**
   

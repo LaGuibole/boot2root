@@ -2,7 +2,8 @@
 
 ## Contexte : Box HAL9042, sujet pedagogique de l'Ecole 42  
 
-> **_NOTE:_** Nous exploiterons dans ce troisieme WriteUp les vulnerabilites exposes dans les 2 premiers pour realiser une privilege escalation. ([Write Up 1](../writeup1/write_up_1.md) && [Write Up 2](../writeup2/write_up_2.md)). Il est recommande d'en prendre connaissance avant de poursuivre.
+> [!NOTE] 
+> Nous exploiterons dans ce troisieme WriteUp les vulnerabilites exposes dans les 2 premiers pour realiser une privilege escalation. ([Write Up 1](../writeup1/write_up_1.md) && [Write Up 2](../writeup2/write_up_2.md)). Il est recommande d'en prendre connaissance avant de poursuivre.
 
 Je ne detaillerai pas tous les steps d'enumeration utilisateur realisees dans le cadre de ce projet ici car il est possible d'en trouver les traces *(tenues a jour plus ou moins regulierement dans le [LOGBOOK](../utils/LOG_BOOK.md))*  
 Toutefois on a une visu de l'escalade a realiser dans la description de l'appliance fournie avec le sujet :  
@@ -39,7 +40,8 @@ En utilisant la SSTI sur `/evaluate` avec les privileges`/var/www/hal9042` :
 ```bash
 ./post_evaluate.sh "find /var/www/hal9042 -type f -exec grep -Hn '/flag' {} +"
 ```  
-> **_NOTE:_** Parcours recursivement `/var/www/hal9042`, selectionne uniquement les fichier classiques, cherche `/flag` dans leur contenu, en affichant pour chaque occurence le fichier et le numero de ligne, en regroupant dans un grep.  
+> [!TIP] 
+> Parcours recursivement `/var/www/hal9042`, selectionne uniquement les fichier classiques, cherche `/flag` dans leur contenu, en affichant pour chaque occurence le fichier et le numero de ligne, en regroupant dans un grep.  
 
 Output :
 ```

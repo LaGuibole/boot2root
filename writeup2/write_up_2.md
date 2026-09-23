@@ -1,7 +1,8 @@
 # WRITEUP 2 - Boot2Root - Web Vulnerability #2 - Server Side Template Injection (SSTI)
 
 ## Contexte : Box HAL9042, sujet pedagogique de l'Ecole 42
-*Notes communes* : Les WriteUp1 & WriteUp2 sont rediges depuis un README.md de troubleshoot que j'ai essaye de tenir a jour au fur et a mesure de mon travail sur la box.  
+> [!NOTE]
+> Les WriteUp1 & WriteUp2 sont rediges depuis un README.md de troubleshoot que j'ai essaye de tenir a jour au fur et a mesure de mon travail sur la box.  
 
 **Tableau recapitulatif de l'application qui est attaquee :**
   
@@ -249,7 +250,8 @@ L'article de [PortSwigger](https://portswigger.net/web-security/server-side-temp
 -d "project_name={{7*7}}"
 Project under evaluation: 49
 ```
-> **_NOTE:_** *Il est essentiel de passer `X-Debug-Render` a `true` pour que le resultat de rendering puisse etre observe*
+> [!TIP] 
+> *Il est essentiel de passer `X-Debug-Render` a `true` pour que le resultat de rendering puisse etre observe*
 
 7. **Class Traversal + RCE** : 
 - Pour passer d'une evaluation d'expression simple a une execution de code systeme, on s'appuie sur la reflexion POO de Python.
@@ -277,4 +279,5 @@ __globals__    = dictionnaire global
 popen()        = processus systeme
 read()         = lit la sortie de popen()
 ```
-> **_NOTE:_** *Le detail du processus de recherche est dispo dans le journal de bord [ici](../utils/LOG_BOOK.md)*
+> [!NOTE] 
+> *Le detail du processus de recherche est dispo dans le journal de bord [ici](../utils/LOG_BOOK.md)*
