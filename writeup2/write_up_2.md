@@ -277,4 +277,4 @@ __globals__    = dictionnaire global
 popen()        = processus systeme
 read()         = lit la sortie de popen()
 ```
-> **_NOTE:_** *Le detail du processus de recherche est dispo dans le journal de bord [ici](/chemin/a_venir)*
+> **_NOTE:_** *Le detail du processus de recherche est dispo dans le journal de bord [ici](../utils/LOG_BOOK.md)*
