@@ -26,6 +26,8 @@ Les `.key_part` vont nous permettre de dechiffrer un rapport de `ol`.
 Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra concatener les 4 `.key_part` dans un ordre precis afin de pouvoir dechiffrer le rapport : 
 
 1. `ol`
+- **Prerequis** : Avoir le pivot `paco->wil`
+- **Recuperation** : Expliquee plus bas [Clic](./write_up_3.md#e-prendre-le-controle-sur-ol).  
 
 2. `wil`  
 
@@ -55,8 +57,8 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 ### FLAGS  
 | Number | Flag                                             |
 |--------|--------------------------------------------------|
-|   1    |   FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}    |
-|   2    |                                                  |
+|   1    | FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}      |
+|   2    | FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}                 |
 |   3    |                                                  |
 |   4    |                                                  |
 |   5    |                                                  |
@@ -97,8 +99,17 @@ Did you really think it would be that easy?
 
 Le resultat est le meme sur `http://10.0.2.2:5042/flag.txt`
 
-2. 
+2. **FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}**
+> [!NOTE]
+> La decouverte de ce flag est detaillee dans le [LOGBOOK](../utils/LOG_BOOK.md). Je serai plus succinct ici.  
 
+En faisant de l'enumeration sur les fichiers de `xavier` on decouvre que sa session a ete supprimee apres qu'il ait eu le malheur de poser des questions sur le projet `FORK`. 
+
+Un indice nous indique que l'on peut retrouver des traces de `xavier` sous son id `1337`.  
+
+On retrouve un binaire `/var/backups/xbackup`, si on le cat, un flag apparait dans le fichier : `FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}`.  
+
+Les details sur une fausse piste peuvent etre trouves dans le [LOGBOOK](../utils/LOG_BOOK.md). J'ai utilise Ghidra, essaye de le reverse pour rien, c'etait pas fun, mais j'ai appris. T_T  
 
 ## KILL CHAIN
 
@@ -223,7 +234,7 @@ nd5ef3HqPILkSJLtE8a2lgNktuuAQ=
 -----END OPENSSH PRIVATE KEY-----
 > ^C
 ```
-> [!CAUTION]
+> [!IMPORTANT]
 > Dans mon cas c'etait deja fait, sinon ne pas oublier d'ajouter les perms pour la cle ssh de `sophie` : `chmod 600 id_rsa_sophie.enc`
 
 3. Se connecter avec la passphrase :  
@@ -331,9 +342,10 @@ sophie@hal9042:/home/ol/.config$ cd ../scripts/ && cat check.sh
 LOG=/var/log/hal9042/check.log
 echo "$(date -u +%FT%TZ) [check] hal9042d heartbeat: nominal" >> "$LOG" 2>/dev/null
 echo "$(date -u +%FT%TZ) [check] confidence: nominal" >> "$LOG" 2>/dev/null
-echo "$(date -u +%FT%TZ) [KEYPART] cd /home/ol/.config && cat .key_part" >> "$LOG" ==> OK
+echo "$(date -u +%FT%TZ) [KEYPART] $(cd /home/ol/.config && cat .key_part)" >> "$LOG" ==> OK
 ```
 - On attend l'execution par la crontable depuis les privileges de `ol` :
 ```bash
 2026-09-23T14:15:02Z [KEYPART] M0ul1n3tt3
 ```
+
