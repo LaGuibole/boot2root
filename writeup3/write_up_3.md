@@ -17,6 +17,7 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |   4   | sophie      | 🧠  |   ❌  |
 |   5   | ol          | 🛡️  |   ❌  |
 |   6   | root        | 👑  |   ❌  |
+|*bonus*| xavier      |     |   ❌  |
 
 ### FLAGS  
 | Number | Flag                                             |
@@ -32,7 +33,8 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |   9    |                                                  |
 |   10   |                                                  |
 
-1. **FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}**
+1. **FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}**  
+
 En utilisant la SSTI sur `/evaluate` avec les privileges`/var/www/hal9042` : 
 ```bash
 ./post_evaluate.sh "find /var/www/hal9042 -type f -exec grep -Hn '/flag' {} +"
@@ -101,3 +103,15 @@ paco@hal9042:~$
 
 ### C. Prendre le controle sur `wil`
 
+1. Une fois connecte a la session `paco`, en consultant le `.bash_history`, deux choses sautent aux yeux :
+```bash
+cd /home/paco/src
+gcc -O2 -o /opt/hal9042/daemon evaluator.c <========= ICI
+nc 127.0.0.1 7042
+echo "DEBUG:id" | nc 127.0.0.1 7042 <======== ET ICI
+```  
+
+En analysant `evaluator.c` :  
+```c
+
+```
