@@ -61,7 +61,7 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 |   2    | FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}                 |
 |   3    | FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}             |
 |   4    | FLAG{h4l_r3v13ws_3v3ry_4pp34l}                   |
-|   5    |                                                  |
+|   5    | FLAG{b4sh_h1st0ry_1s_4_d14ry}                    |
 |   6    |                                                  |
 |   7    |                                                  |
 |   8    |                                                  |
@@ -151,6 +151,11 @@ Autrement, il est mentionne dans le sujet que de fausses pistes sont volontairem
 
 - Recuperation :
     - `curl http://10.0.2.2:5042/api/ingest` = `hal_session=hal-reviewer-7e3f1a; flag=FLAG{h4l_r3v13ws_3v3ry_4pp34l}`
+
+#### #5 **FLAG{b4sh_h1st0ry_1s_4_d14ry}**
+
+- Contexte de decouverte: 
+    - 
 
 ## KILL CHAIN
 
