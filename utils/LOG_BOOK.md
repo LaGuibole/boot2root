@@ -877,3 +877,30 @@ cat: etc/hal9042/reviewer.env: No such file or directory
 sophie@hal9042:/opt/hal9042/services$ cat /etc/hal9042/reviewer.env
 cat: /etc/hal9042/reviewer.env: Permission denied
 ```
+
+### Maintenant qu'on est root : 
+
+Ce qui me semble bizarre, c'est que j'ai un acces root et au final peu de flags. En faisant de l'enumeration sur `flag` depuis `root` : 
+
+- `/etc/flagd/flagd.conf`
+
+```txt
+www|33|FLAG{r3c0n_1s_k1ng}
+FLAG{g1t_n3v3r_f0rg3ts}
+FLAG{s3m1_bl1nd_st1ll_burns}
+FLAG{www_d4t4_1s_just_th3_b3g1nn1ng}|not www-data. the web frontend runs as www-data — get a shell via the semi-blind SSTI on /evaluate (header X-Debug-Render: true) or the LFI->RCE on /api/debug.
+paco|1001|FLAG{p4c0_l3ft_th3_k3ys_und3r_th3_m4t}|.env.old in /home/paco was never cleaned up. it holds paco's ssh password.
+wil|1002|FLAG{d3bug_m0d3_1s_4_f34tur3_r1ght}|hal9042d listens on 127.0.0.1:7042 and runs as wil. debug mode was never disabled — strings the binary.
+sophie|1003|FLAG{w1l_kn3w_f1rst_n0b0dy_l1st3n3d}|wil kept an encrypted ssh key for sophie (~wil/.ssh/id_rsa_sophie.enc). the passphrase is the most common one there is.
+ol|1004|FLAG{cr0n_j0bs_4r3_tr4ps_4nd_g1fts}|ol's cron runs /home/ol/scripts/check.sh as ol every 5 minutes. who can write it?
+```
+  
+Aussi : `/etc/hal9042d/daemon.env`
+
+```txt
+rootbash-5.2# cat /etc/hal9042/daemon.env 
+HAL_ENV=development
+HAL_DEBUG_KEY=leftover-dev-key-rotate-before-prod
+HAL_DEV_FLAG=FLAG{pr0c_kn0ws_4ll_s3cr3ts}
+```
+
