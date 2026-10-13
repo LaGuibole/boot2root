@@ -20,6 +20,9 @@ L'ensemble des 10 flags mandatory ainsi que les 5 flags bonus ont ete recuperes.
 > **Avis aux etudiants 42** : Le sujet ne ment pas, ce projet prend du temps, et c'est justement le temps demande par ce projet et les difficultes rencontrees au long du chemin qui en font son essence. Ne consultez pas les writeup si vous faites acutellement ce projet, prenez le temps d'analyser, certains flags ne vont vous apparaitre evident qu'a la fin du projet. C'est le but.  
 > **Pour le reste** : Vous pouvez consulter les WriteUp, selon mon niveau de fatigue au moment de la redaction, la qualite redactionnelle peut en etre impactee, pardonnez-moi d'avance.
 
+> [!NOTE]
+> English WriteUps are available for non-french speaking visitor 🇬🇧 :-)
+
 ## Succes : 
 
 ### Users :
