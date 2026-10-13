@@ -1,6 +1,6 @@
 # WRITEUP 3 - Boot2Root - Privilege Escalation Details
 
-> [CAUTION]
+> [!CAUTION]
 > This WriteUp was AI translated from the french WriteUp version, as I am exhausted with this project, i did not took time to review.
 
 ## Context: HAL9042 Box, pedagogical project of École 42

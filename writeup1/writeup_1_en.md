@@ -1,6 +1,6 @@
 # WRITEUP 1 - Boot2Root - Web Vulnerability #1 - Local File Inclusion
 
-> [CAUTION]
+> [!CAUTION]
 > This WriteUp was AI translated from the french WriteUp version, as I am exhausted with this project, i did not took time to review.
 
 ## Context: HAL9042 Box, educational project of Ecole 42

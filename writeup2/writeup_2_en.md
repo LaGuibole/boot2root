@@ -1,6 +1,6 @@
 # WRITEUP 2 - Boot2Root - Web Vulnerability #2 - Server Side Template Injection (SSTI)
 
-> [CAUTION]
+> [!CAUTION]
 > This WriteUp was AI translated from the french WriteUp version, as I am exhausted with this project, i did not took time to review.
 
 ## Context: HAL9042 Box, educational project of Ecole 42
