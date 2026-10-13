@@ -4,7 +4,7 @@
 
 Je debute le projet, j'ai lance la VM, voila ce sur quoi on tombe au lancement :  
 
-![image](./assets/roadmap/first_step.png)  
+![image](../assets/roadmap/first_step.png)  
 
 Comme d'hab, on est bloques par nos perms sur les sessions de 42, pour pouvoir utiliser `arp`, `nmap` etc ... On passe sur une VM Kali. Apres un peu de config on peut essayer de decouvrir l'adresse IP du serveur. 
 
@@ -19,7 +19,7 @@ c2r2p5.42lehavre.fr (10.12.2.5) at 90:xx:6e:xx:88:xx [ether] on eth1
 
 Dans la config de la VM `HAL9042` on voit que les ports suivants sont ouverts pour les services `ssh` et `web`:  
 
-![image](./assets/roadmap/ports.png)  
+![image](../assets/roadmap/ports.png)  
 
 On va voir ce qu'on peut trouver ici :  
 ```
@@ -37,7 +37,7 @@ hal9042@10.0.2.2's password:
 
 Et pour le service web :  
 
-![image](./assets/roadmap/hal_web.png)  
+![image](../assets/roadmap/hal_web.png)  
 
 En inspectant le code source de la page on tombe sur des indices qui peuvent etre interessant :  
 
